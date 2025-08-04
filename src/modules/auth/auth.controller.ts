@@ -44,3 +44,4 @@ export class AuthController {
     await this.userService.register(dto)
   }
 }
+/// enpoint for user registration is 'auth/register', and for user login is 'auth/login'.

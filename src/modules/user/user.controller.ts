@@ -24,7 +24,7 @@ export const permissions = definePermission('system:user', {
   PASSWORD_RESET: 'pass:reset',
 } as const)
 
-@ApiTags('System - 用户模块')
+@ApiTags('System - User Module')
 @ApiSecurityAuth()
 @Controller('users')
 export class UserController {
@@ -34,7 +34,7 @@ export class UserController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: '获取用户列表' })
+  @ApiOperation({ summary: 'Get user list' })
   @ApiResult({ type: [UserEntity], isPage: true })
   @Perm(permissions.LIST)
   async list(@Query() dto: UserQueryDto) {
@@ -42,21 +42,21 @@ export class UserController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: '查询用户' })
+  @ApiOperation({ summary: 'Get user details' })
   @Perm(permissions.READ)
   async read(@IdParam() id: number) {
     return this.userService.info(id)
   }
 
   @Post()
-  @ApiOperation({ summary: '新增用户' })
+  @ApiOperation({ summary: 'Create a new user' })
   @Perm(permissions.CREATE)
   async create(@Body() dto: UserDto): Promise<void> {
     await this.userService.create(dto)
   }
 
   @Put(':id')
-  @ApiOperation({ summary: '更新用户' })
+  @ApiOperation({ summary: 'Update user' })
   @Perm(permissions.UPDATE)
   async update(@IdParam() id: number, @Body() dto: UserUpdateDto): Promise<void> {
     await this.userService.update(id, dto)
@@ -64,7 +64,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: '删除用户' })
+  @ApiOperation({ summary: 'Delete user(s)' })
   @ApiParam({ name: 'id', type: String, schema: { oneOf: [{ type: 'string' }, { type: 'number' }] } })
   @Perm(permissions.DELETE)
   async delete(@Param('id', new ParseArrayPipe({ items: Number, separator: ',' })) ids: number[]): Promise<void> {
@@ -73,7 +73,7 @@ export class UserController {
   }
 
   @Post(':id/password')
-  @ApiOperation({ summary: '更改用户密码' })
+  @ApiOperation({ summary: 'Change user password' })
   @Perm(permissions.PASSWORD_UPDATE)
   async password(@IdParam() id: number, @Body() dto: UserPasswordDto): Promise<void> {
     await this.userService.forceUpdatePassword(id, dto.password)

@@ -1,28 +1,29 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import Redis from 'ioredis'
 import { isEmpty, isNil } from 'lodash'
 import { EntityManager, In, Like, Repository } from 'typeorm'
-
 import { InjectRedis } from '~/common/decorators/inject-redis.decorator'
-
 import { BusinessException } from '~/common/exceptions/biz.exception'
+
 import { ErrorEnum } from '~/constants/error-code.constant'
+
 import { ROOT_ROLE_ID, SYS_USER_INITPASSWORD } from '~/constants/system.constant'
 import { genAuthPermKey, genAuthPVKey, genAuthTokenKey, genOnlineUserKey } from '~/helper/genRedisKey'
-
 import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
+
 import { AccountUpdateDto } from '~/modules/auth/dto/account.dto'
 import { RegisterDto } from '~/modules/auth/dto/auth.dto'
 import { QQService } from '~/shared/helper/qq.service'
-
 import { md5, randomValue } from '~/utils'
 
 import { AccessTokenEntity } from '../auth/entities/access-token.entity'
+
 import { DeptEntity } from '../system/dept/dept.entity'
 import { ParamConfigService } from '../system/param-config/param-config.service'
 import { RoleEntity } from '../system/role/role.entity'
+import { OdooPartnerData, OdooService } from './../odoo/odoo.service'
 
 import { UserStatus } from './constant'
 import { PasswordUpdateDto } from './dto/password.dto'
@@ -32,6 +33,7 @@ import { AccountInfo } from './user.model'
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger (UserService.name)
   constructor(
     @InjectRedis()
     private readonly redis: Redis,
@@ -42,6 +44,7 @@ export class UserService {
     @InjectEntityManager() private entityManager: EntityManager,
     private readonly paramConfigService: ParamConfigService,
     private readonly qqService: QQService,
+    private readonly OdooService: OdooService,
   ) {}
 
   async findUserById(id: number): Promise<UserEntity | undefined> {
@@ -83,9 +86,6 @@ export class UserService {
     return user
   }
 
-  /**
-   * 更新个人信息
-   */
   async updateAccountInfo(uid: number, info: AccountUpdateDto): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: uid })
     if (isEmpty(user))
@@ -109,9 +109,6 @@ export class UserService {
     await this.userRepository.update(uid, data)
   }
 
-  /**
-   * 更改密码
-   */
   async updatePassword(uid: number, dto: PasswordUpdateDto): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: uid })
     if (isEmpty(user))
@@ -127,9 +124,6 @@ export class UserService {
     await this.upgradePasswordV(user.id)
   }
 
-  /**
-   * 直接更改密码
-   */
   async forceUpdatePassword(uid: number, password: string): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: uid })
 
@@ -138,9 +132,7 @@ export class UserService {
     await this.upgradePasswordV(user.id)
   }
 
-  /**
-   * 增加系统用户，如果返回false则表示已存在该用户
-   */
+  // tạo user
   async create({
     username,
     password,
@@ -178,11 +170,23 @@ export class UserService {
       const result = await manager.save(u)
       return result
     })
+
+    /// odoo intergrationstart
+    try {
+      const odooData: OdooPartnerData = {
+        name: data.nickname || username,
+        email: data.email,
+        phone: data.phone,
+      }
+      await this.OdooService.syncPartner(odooData)
+      // Nếu muốn lưu odooPartnerId về DB thì mở dòng sau:
+      // await this.userRepository.update(newUser.id, { OdooPartnerId: odooData.id })
+    }
+    catch (error) {
+      console.log(`failed to sync  new user  ${username} to odoo.`, error.stack)
+    }
   }
 
-  /**
-   * 更新用户信息
-   */
   async update(
     id: number,
     { password, deptId, roleIds, status, ...data }: UserUpdateDto,
@@ -242,20 +246,25 @@ export class UserService {
     return user
   }
 
-  /**
-   * 根据ID列表删除用户
-   */
   async delete(userIds: number[]): Promise<void | never> {
     const rootUserId = await this.findRootUserId()
     if (userIds.includes(rootUserId))
-      throw new BadRequestException('不能删除root用户!')
+      throw new BadRequestException('Không thể xóa người dùng root!')
 
+    const usersToDelete = await this.userRepository.findBy({ id: In(userIds) })
+    for (const user of usersToDelete) {
+      if (user.email) {
+        try {
+          await this.OdooService.deactivatePartnerByEmail(user.email)
+        }
+        catch (error) {
+          this.logger.error(`Failed to deactivate Odoo partner for user ID ${user.id}.`, error.stack)
+        }
+      }
+    }
     await this.userRepository.delete(userIds)
   }
 
-  /**
-   * 查找超管的用户ID
-   */
   async findRootUserId(): Promise<number> {
     const user = await this.userRepository.findOneBy({
       roles: { id: ROOT_ROLE_ID },
@@ -263,9 +272,7 @@ export class UserService {
     return user.id
   }
 
-  /**
-   * 查询用户列表
-   */
+  /// list danh sách người dùng
   async list({
     page,
     pageSize,
@@ -296,9 +303,6 @@ export class UserService {
     })
   }
 
-  /**
-   * 禁用用户
-   */
   async forbidden(uid: number, accessToken?: string): Promise<void> {
     await this.redis.del(genAuthPVKey(uid))
     await this.redis.del(genAuthTokenKey(uid))
@@ -311,9 +315,6 @@ export class UserService {
     }
   }
 
-  /**
-   * 禁用多个用户
-   */
   async multiForbidden(uids: number[]): Promise<void> {
     if (uids) {
       const pvs: string[] = []
@@ -330,9 +331,6 @@ export class UserService {
     }
   }
 
-  /**
-   * 升级用户版本密码
-   */
   async upgradePasswordV(id: number): Promise<void> {
     // admin:passwordVersion:${param.id}
     const v = await this.redis.get(genAuthPVKey(id))
@@ -340,9 +338,6 @@ export class UserService {
       await this.redis.set(genAuthPVKey(id), Number.parseInt(v) + 1)
   }
 
-  /**
-   * 判断用户名是否存在
-   */
   async exist(username: string) {
     const user = await this.userRepository.findOneBy({ username })
     if (isNil(user))
@@ -351,9 +346,6 @@ export class UserService {
     return true
   }
 
-  /**
-   * 注册
-   */
   async register({ username, ...data }: RegisterDto): Promise<void> {
     const exists = await this.userRepository.findOneBy({
       username,

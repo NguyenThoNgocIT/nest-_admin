@@ -79,7 +79,7 @@ export class RoleService {
 
   async delete(id: number): Promise<void> {
     if (id === ROOT_ROLE_ID)
-      throw new Error('不能删除超级管理员')
+      throw new Error('Không thể xóa quản trị viên cấp cao')
     await this.roleRepository.delete(id)
   }
 

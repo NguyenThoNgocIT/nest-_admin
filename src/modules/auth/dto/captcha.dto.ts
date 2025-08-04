@@ -8,11 +8,12 @@ import {
   IsString,
 } from 'class-validator'
 
+// DTO cho hình ảnh mã xác minh (captcha)
 export class ImageCaptchaDto {
   @ApiProperty({
     required: false,
     default: 100,
-    description: '验证码宽度',
+    description: 'Chiều rộng của mã xác minh',
   })
   @Type(() => Number)
   @IsInt()
@@ -22,7 +23,7 @@ export class ImageCaptchaDto {
   @ApiProperty({
     required: false,
     default: 50,
-    description: '验证码宽度',
+    description: 'Chiều cao của mã xác minh',
   })
   @Type(() => Number)
   @IsInt()
@@ -30,24 +31,27 @@ export class ImageCaptchaDto {
   readonly height: number = 50
 }
 
+// DTO để gửi mã xác minh qua email
 export class SendEmailCodeDto {
-  @ApiProperty({ description: '邮箱' })
-  @IsEmail({}, { message: '邮箱格式不正确' })
+  @ApiProperty({ description: 'Email' })
+  @IsEmail({}, { message: 'Định dạng email không hợp lệ' })
   email: string
 }
 
+// DTO để gửi mã xác minh qua tin nhắn SMS
 export class SendSmsCodeDto {
-  @ApiProperty({ description: '手机号' })
-  @IsMobilePhone('zh-CN', {}, { message: '手机号格式不正确' })
+  @ApiProperty({ description: 'Số điện thoại' })
+  @IsMobilePhone('zh-CN', {}, { message: 'Định dạng số điện thoại không hợp lệ' })
   phone: string
 }
 
+// DTO để kiểm tra mã xác minh
 export class CheckCodeDto {
-  @ApiProperty({ description: '手机号/邮箱' })
+  @ApiProperty({ description: 'Email hoặc số điện thoại' })
   @IsString()
   account: string
 
-  @ApiProperty({ description: '验证码' })
+  @ApiProperty({ description: 'Mã xác minh' })
   @IsString()
   code: string
 }

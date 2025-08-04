@@ -20,13 +20,17 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'
 import { RbacGuard } from './modules/auth/guards/rbac.guard'
 import { HealthModule } from './modules/health/health.module'
 import { NetdiskModule } from './modules/netdisk/netdisk.module'
+
+import { OdooService } from './modules/odoo/odoo.service'
 import { SseModule } from './modules/sse/sse.module'
 import { SystemModule } from './modules/system/system.module'
+
 import { TasksModule } from './modules/tasks/tasks.module'
+
 import { TodoModule } from './modules/todo/todo.module'
 import { ToolsModule } from './modules/tools/tools.module'
-import { DatabaseModule } from './shared/database/database.module'
 
+import { DatabaseModule } from './shared/database/database.module'
 import { SocketModule } from './socket/socket.module'
 
 @Module({
@@ -34,11 +38,9 @@ import { SocketModule } from './socket/socket.module'
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
-      // 指定多个 env 文件时，第一个优先级最高
       envFilePath: ['.env.local', `.env.${process.env.NODE_ENV}`, '.env'],
       load: [...Object.values(config)],
     }),
-    // 启用 CLS 上下文
     ClsModule.forRoot({
       global: true,
       // https://github.com/Papooch/nestjs-cls/issues/92
@@ -47,7 +49,6 @@ import { SocketModule } from './socket/socket.module'
         setup: (cls, context) => {
           const req = context.switchToHttp().getRequest<FastifyRequest<{ Params: { id?: string } }>>()
           if (req.params?.id && req.body) {
-            // 供自定义参数验证器(UniqueConstraint)使用
             cls.set('operateId', Number.parseInt(req.params.id))
           }
         },
@@ -64,11 +65,6 @@ import { SocketModule } from './socket/socket.module'
     HealthModule,
     SseModule,
     NetdiskModule,
-
-    // biz
-
-    // end biz
-
     TodoModule,
   ],
   providers: [
@@ -82,6 +78,7 @@ import { SocketModule } from './socket/socket.module'
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RbacGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    OdooService,
 
   ],
 })

@@ -10,18 +10,19 @@ import {
 
 import { MenuEntity } from '~/modules/system/menu/menu.entity'
 
+// DTO để cập nhật thông tin tài khoản người dùng
 export class AccountUpdateDto {
-  @ApiProperty({ description: '用户呢称' })
+  @ApiProperty({ description: 'Biệt danh người dùng' })
   @IsString()
   @IsOptional()
   nickname: string
 
-  @ApiProperty({ description: '用户邮箱' })
+  @ApiProperty({ description: 'Email người dùng' })
   @IsOptional()
   @IsEmail()
   email: string
 
-  @ApiProperty({ description: '用户QQ' })
+  @ApiProperty({ description: 'Số QQ của người dùng' })
   @IsOptional()
   @IsString()
   @Matches(/^\d+$/)
@@ -29,37 +30,43 @@ export class AccountUpdateDto {
   @MaxLength(11)
   qq: string
 
-  @ApiProperty({ description: '用户手机号' })
+  @ApiProperty({ description: 'Số điện thoại người dùng' })
   @IsOptional()
   @IsString()
   phone: string
 
-  @ApiProperty({ description: '用户头像' })
+  @ApiProperty({ description: 'Ảnh đại diện của người dùng' })
   @IsOptional()
   @IsString()
   avatar: string
 
-  @ApiProperty({ description: '用户备注' })
+  @ApiProperty({ description: 'Ghi chú của người dùng' })
   @IsOptional()
   @IsString()
   remark: string
 }
 
+// DTO để đặt lại mật khẩu
 export class ResetPasswordDto {
-  @ApiProperty({ description: '临时token', example: 'uuid' })
+  @ApiProperty({ description: 'Token tạm thời', example: 'uuid' })
   @IsString()
   accessToken: string
 
-  @ApiProperty({ description: '密码', example: 'a123456' })
+  @ApiProperty({ description: 'Mật khẩu mới', example: 'a123456' })
   @IsString()
   @Matches(/^\S*(?=\S{6})(?=\S*\d)(?=\S*[A-Z])\S*$/i)
   @MinLength(6)
   password: string
 }
 
-export class MenuMeta extends PartialType(OmitType(MenuEntity, ['parentId', 'createdAt', 'updatedAt', 'id', 'roles', 'path', 'name'] as const)) {
+// Thông tin meta cho menu (loại bỏ các trường không cần và cho phép tùy chọn)
+export class MenuMeta extends PartialType(
+  OmitType(MenuEntity, ['parentId', 'createdAt', 'updatedAt', 'id', 'roles', 'path', 'name'] as const),
+) {
   title: string
 }
+
+// Dữ liệu menu tài khoản với một số trường được chọn
 export class AccountMenus extends PickType(MenuEntity, ['id', 'path', 'name', 'component'] as const) {
   meta: MenuMeta
 }
