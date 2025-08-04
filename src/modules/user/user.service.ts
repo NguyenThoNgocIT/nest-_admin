@@ -33,20 +33,19 @@ import { AccountInfo } from './user.model'
 
 @Injectable()
 export class UserService {
-  private readonly logger = new Logger (UserService.name)
+  private readonly logger = new Logger(UserService.name)
+
   constructor(
-    @InjectRedis()
-    private readonly redis: Redis,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
-    @InjectRepository(RoleEntity)
-    private readonly roleRepository: Repository<RoleEntity>,
+    @InjectRedis() private readonly redis: Redis,
+    @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(RoleEntity) private readonly roleRepository: Repository<RoleEntity>,
     @InjectEntityManager() private entityManager: EntityManager,
     private readonly paramConfigService: ParamConfigService,
     private readonly qqService: QQService,
     private readonly OdooService: OdooService,
   ) {}
 
+  // Tìm người dùng theo ID, chỉ trả về nếu đang kích hoạt
   async findUserById(id: number): Promise<UserEntity | undefined> {
     return this.userRepository
       .createQueryBuilder('user')
@@ -57,6 +56,7 @@ export class UserService {
       .getOne()
   }
 
+  // Tìm người dùng theo username, chỉ trả về nếu đang kích hoạt
   async findUserByUserName(username: string): Promise<UserEntity | undefined> {
     return this.userRepository
       .createQueryBuilder('user')
@@ -67,12 +67,9 @@ export class UserService {
       .getOne()
   }
 
-  /**
-   * 获取用户信息
-   * @param uid user id
-   */
+  // Lấy thông tin tài khoản người dùng kèm roles
   async getAccountInfo(uid: number): Promise<AccountInfo> {
-    const user: UserEntity = await this.userRepository
+    const user = await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')
       .where(`user.id = :uid`, { uid })
@@ -80,12 +77,11 @@ export class UserService {
 
     if (isEmpty(user))
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
-
     delete user?.psalt
-
     return user
   }
 
+  // Cập nhật thông tin người dùng như avatar, email, qq...
   async updateAccountInfo(uid: number, info: AccountUpdateDto): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: uid })
     if (isEmpty(user))
@@ -100,22 +96,20 @@ export class UserService {
       ...(info.remark ? { remark: info.remark } : null),
     }
 
-    if (!info.avatar && info.qq) {
-      // 如果qq不等于原qq，则更新qq头像
-      if (info.qq !== user.qq)
-        data.avatar = await this.qqService.getAvater(info.qq)
+    if (!info.avatar && info.qq && info.qq !== user.qq) {
+      data.avatar = await this.qqService.getAvater(info.qq)
     }
 
     await this.userRepository.update(uid, data)
   }
 
+  // Cập nhật mật khẩu có xác thực mật khẩu cũ
   async updatePassword(uid: number, dto: PasswordUpdateDto): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: uid })
     if (isEmpty(user))
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
 
     const comparePassword = md5(`${dto.oldPassword}${user.psalt}`)
-    // 原密码不一致，不允许更改
     if (user.password !== comparePassword)
       throw new BusinessException(ErrorEnum.PASSWORD_MISMATCH)
 
@@ -124,15 +118,15 @@ export class UserService {
     await this.upgradePasswordV(user.id)
   }
 
+  // Cập nhật mật khẩu bắt buộc (dùng cho admin)
   async forceUpdatePassword(uid: number, password: string): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: uid })
-
     const newPassword = md5(`${password}${user.psalt}`)
     await this.userRepository.update({ id: uid }, { password: newPassword })
     await this.upgradePasswordV(user.id)
   }
 
-  // tạo user
+  // Tạo mới người dùng + đồng bộ với Odoo
   async create({
     username,
     password,
@@ -140,9 +134,7 @@ export class UserService {
     deptId,
     ...data
   }: UserDto): Promise<void> {
-    const exists = await this.userRepository.findOneBy({
-      username,
-    })
+    const exists = await this.userRepository.findOneBy({ username })
     if (!isEmpty(exists))
       throw new BusinessException(ErrorEnum.SYSTEM_USER_EXISTS)
 
@@ -150,14 +142,13 @@ export class UserService {
       const salt = randomValue(32)
 
       if (!password) {
-        const initPassword = await this.paramConfigService.findValueByKey(
-          SYS_USER_INITPASSWORD,
-        )
+        const initPassword = await this.paramConfigService.findValueByKey(SYS_USER_INITPASSWORD)
         password = md5(`${initPassword ?? '123456'}${salt}`)
       }
       else {
-        password = md5(`${password ?? '123456'}${salt}`)
+        password = md5(`${password}${salt}`)
       }
+
       const u = manager.create(UserEntity, {
         username,
         password,
@@ -167,11 +158,10 @@ export class UserService {
         dept: await DeptEntity.findOneBy({ id: deptId }),
       })
 
-      const result = await manager.save(u)
-      return result
+      await manager.save(u)
     })
 
-    /// odoo intergrationstart
+    // Đồng bộ người dùng với Odoo
     try {
       const odooData: OdooPartnerData = {
         name: data.nickname || username,
@@ -179,14 +169,13 @@ export class UserService {
         phone: data.phone,
       }
       await this.OdooService.syncPartner(odooData)
-      // Nếu muốn lưu odooPartnerId về DB thì mở dòng sau:
-      // await this.userRepository.update(newUser.id, { OdooPartnerId: odooData.id })
     }
     catch (error) {
       console.log(`failed to sync  new user  ${username} to odoo.`, error.stack)
     }
   }
 
+  // Cập nhật người dùng: thông tin, roles, phòng ban
   async update(
     id: number,
     { password, deptId, roleIds, status, ...data }: UserUpdateDto,
@@ -195,10 +184,7 @@ export class UserService {
       if (password)
         await this.forceUpdatePassword(id, password)
 
-      await manager.update(UserEntity, id, {
-        ...data,
-        status,
-      })
+      await manager.update(UserEntity, id, { ...data, status })
 
       const user = await this.userRepository
         .createQueryBuilder('user')
@@ -206,6 +192,7 @@ export class UserService {
         .leftJoinAndSelect('user.dept', 'dept')
         .where('user.id = :id', { id })
         .getOne()
+
       if (roleIds) {
         await manager
           .createQueryBuilder()
@@ -213,6 +200,7 @@ export class UserService {
           .of(id)
           .addAndRemove(roleIds, user.roles)
       }
+
       if (deptId) {
         await manager
           .createQueryBuilder()
@@ -222,16 +210,12 @@ export class UserService {
       }
 
       if (status === 0) {
-        // 禁用状态
         await this.forbidden(id)
       }
     })
   }
 
-  /**
-   * 查找用户信息
-   * @param id 用户id
-   */
+  // Lấy chi tiết người dùng (kèm roles, phòng ban)
   async info(id: number): Promise<UserEntity> {
     const user = await this.userRepository
       .createQueryBuilder('user')
@@ -246,7 +230,8 @@ export class UserService {
     return user
   }
 
-  async delete(userIds: number[]): Promise<void | never> {
+  // Xóa người dùng (và đồng bộ hủy hoạt động Odoo nếu có email)
+  async delete(userIds: number[]): Promise<void> {
     const rootUserId = await this.findRootUserId()
     if (userIds.includes(rootUserId))
       throw new BadRequestException('Không thể xóa người dùng root!')
@@ -262,9 +247,11 @@ export class UserService {
         }
       }
     }
+
     await this.userRepository.delete(userIds)
   }
 
+  // Tìm ID người dùng có role root
   async findRootUserId(): Promise<number> {
     const user = await this.userRepository.findOneBy({
       roles: { id: ROOT_ROLE_ID },
@@ -272,7 +259,7 @@ export class UserService {
     return user.id
   }
 
-  /// list danh sách người dùng
+  // Lấy danh sách người dùng kèm filter và phân trang
   async list({
     page,
     pageSize,
@@ -286,7 +273,6 @@ export class UserService {
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.dept', 'dept')
       .leftJoinAndSelect('user.roles', 'role')
-      // .where('user.id NOT IN (:...ids)', { ids: [rootUserId, uid] })
       .where({
         ...(username ? { username: Like(`%${username}%`) } : null),
         ...(nickname ? { nickname: Like(`%${nickname}%`) } : null),
@@ -297,24 +283,21 @@ export class UserService {
     if (deptId)
       queryBuilder.andWhere('dept.id = :deptId', { deptId })
 
-    return paginate<UserEntity>(queryBuilder, {
-      page,
-      pageSize,
-    })
+    return paginate<UserEntity>(queryBuilder, { page, pageSize })
   }
 
+  // Thu hồi quyền truy cập người dùng (Xóa khỏi Redis)
   async forbidden(uid: number, accessToken?: string): Promise<void> {
     await this.redis.del(genAuthPVKey(uid))
     await this.redis.del(genAuthTokenKey(uid))
     await this.redis.del(genAuthPermKey(uid))
     if (accessToken) {
-      const token = await AccessTokenEntity.findOne({
-        where: { value: accessToken },
-      })
+      const token = await AccessTokenEntity.findOne({ where: { value: accessToken } })
       this.redis.del(genOnlineUserKey(token.id))
     }
   }
 
+  // Thu hồi quyền nhiều người dùng
   async multiForbidden(uids: number[]): Promise<void> {
     if (uids) {
       const pvs: string[] = []
@@ -331,13 +314,14 @@ export class UserService {
     }
   }
 
+  // Tăng version mật khẩu (phục vụ xác thực token mới)
   async upgradePasswordV(id: number): Promise<void> {
-    // admin:passwordVersion:${param.id}
     const v = await this.redis.get(genAuthPVKey(id))
     if (!isEmpty(v))
       await this.redis.set(genAuthPVKey(id), Number.parseInt(v) + 1)
   }
 
+  // Kiểm tra username đã tồn tại chưa
   async exist(username: string) {
     const user = await this.userRepository.findOneBy({ username })
     if (isNil(user))
@@ -346,16 +330,14 @@ export class UserService {
     return true
   }
 
+  // Đăng ký tài khoản người dùng (dành cho user tự đăng ký)
   async register({ username, ...data }: RegisterDto): Promise<void> {
-    const exists = await this.userRepository.findOneBy({
-      username,
-    })
+    const exists = await this.userRepository.findOneBy({ username })
     if (!isEmpty(exists))
       throw new BusinessException(ErrorEnum.SYSTEM_USER_EXISTS)
 
     await this.entityManager.transaction(async (manager) => {
       const salt = randomValue(32)
-
       const password = md5(`${data.password ?? 'a123456'}${salt}`)
 
       const u = manager.create(UserEntity, {
@@ -365,9 +347,7 @@ export class UserService {
         psalt: salt,
       })
 
-      const user = await manager.save(u)
-
-      return user
+      await manager.save(u)
     })
   }
 }

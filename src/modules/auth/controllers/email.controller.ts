@@ -11,21 +11,24 @@ import { Public } from '../decorators/public.decorator'
 
 import { SendEmailCodeDto } from '../dto/captcha.dto'
 
-@ApiTags('Auth - 认证模块')
+// Gắn nhãn cho tài liệu Swagger
+@ApiTags('Xác thực - Gửi mã qua Email')
 @UseGuards(ThrottlerGuard)
 @Controller('auth/email')
 export class EmailController {
   constructor(private mailerService: MailerService) {}
 
   @Post('send')
-  @ApiOperation({ summary: '发送邮箱验证码' })
+  @ApiOperation({ summary: 'Gửi mã xác thực qua email' })
   @Public()
-  @Throttle({ default: { limit: 2, ttl: 600000 } })
+  @Throttle({ default: { limit: 2, ttl: 600000 } }) // Giới hạn 2 lần mỗi 10 phút
   async sendEmailCode(
     @Body() dto: SendEmailCodeDto,
     @Ip() ip: string,
   ): Promise<void> {
+    // Kiểm tra captcha hình ảnh nếu cần
     // await this.authService.checkImgCaptcha(dto.captchaId, dto.verifyCode);
+
     const { email } = dto
 
     await this.mailerService.checkLimit(email, ip)
@@ -36,6 +39,6 @@ export class EmailController {
 
   // @Post()
   // async authWithEmail(@AuthUser() user: IAuthUser) {
-  //   // TODO:
+  //   // TODO: Xác thực bằng email
   // }
 }

@@ -15,7 +15,8 @@ import { AccessTokenEntity } from '../entities/access-token.entity'
 import { RefreshTokenEntity } from '../entities/refresh-token.entity'
 
 /**
- * 令牌服务
+ * Dịch vụ xử lý Token
+ *
  */
 @Injectable()
 export class TokenService {
@@ -27,7 +28,7 @@ export class TokenService {
   ) {}
 
   /**
-   * 根据accessToken刷新AccessToken与RefreshToken
+   * Làm mới AccessToken và RefreshToken từ AccessToken hiện tại
    * @param accessToken
    */
   async refreshToken(accessToken: AccessTokenEntity) {
@@ -35,14 +36,15 @@ export class TokenService {
 
     if (refreshToken) {
       const now = dayjs()
-      // 判断refreshToken是否过期
+      // Kiểm tra xem refreshToken có hết hạn không
+
       if (now.isAfter(refreshToken.expired_at))
         return null
 
       const roleIds = await this.roleService.getRoleIdsByUser(user.id)
       const roleValues = await this.roleService.getRoleValues(roleIds)
 
-      // 如果没过期则生成新的access_token和refresh_token
+      // Nếu chưa hết hạn thì tạo mới access_token và refresh_token
       const token = await this.generateAccessToken(user.id, roleValues)
 
       await accessToken.remove()
@@ -53,7 +55,6 @@ export class TokenService {
 
   generateJwtSign(payload: any) {
     const jwtSign = this.jwtService.sign(payload)
-
     return jwtSign
   }
 
@@ -66,7 +67,7 @@ export class TokenService {
 
     const jwtSign = await this.jwtService.signAsync(payload)
 
-    // 生成accessToken
+    // Tạo accessToken
     const accessToken = new AccessTokenEntity()
     accessToken.value = jwtSign
     accessToken.user = { id: uid } as UserEntity
@@ -76,7 +77,7 @@ export class TokenService {
 
     await accessToken.save()
 
-    // 生成refreshToken
+    // Tạo refreshToken
     const refreshToken = await this.generateRefreshToken(accessToken, dayjs())
 
     return {
@@ -86,7 +87,8 @@ export class TokenService {
   }
 
   /**
-   * 生成新的RefreshToken并存入数据库
+   * Tạo refreshToken mới và lưu vào cơ sở dữ liệu
+   *
    * @param accessToken
    * @param now
    */
@@ -115,7 +117,8 @@ export class TokenService {
   }
 
   /**
-   * 检查accessToken是否存在，并且是否处于有效期内
+   *  Kiểm tra accessToken có tồn tại và còn hiệu lực không
+   *
    * @param value
    */
   async checkAccessToken(value: string) {
@@ -135,7 +138,7 @@ export class TokenService {
   }
 
   /**
-   * 移除AccessToken且自动移除关联的RefreshToken
+   *  Xoá accessToken và tự động xoá refreshToken liên quan
    * @param value
    */
   async removeAccessToken(value: string) {
@@ -149,7 +152,8 @@ export class TokenService {
   }
 
   /**
-   * 移除RefreshToken
+   *  Xoá refreshToken
+   *
    * @param value
    */
   async removeRefreshToken(value: string) {
@@ -166,7 +170,8 @@ export class TokenService {
   }
 
   /**
-   * 验证Token是否正确,如果正确则返回所属用户对象
+   *  Xác thực token có hợp lệ không, nếu hợp lệ thì trả về thông tin người dùng
+   *
    * @param token
    */
   async verifyAccessToken(token: string): Promise<IAuthUser> {

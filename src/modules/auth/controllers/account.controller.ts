@@ -16,7 +16,7 @@ import { AuthService } from '../auth.service'
 import { AccountMenus, AccountUpdateDto } from '../dto/account.dto'
 import { JwtAuthGuard } from '../guards/jwt-auth.guard'
 
-@ApiTags('Account - 账户模块')
+@ApiTags('Account - Mô-đun tài khoản')
 @ApiSecurityAuth()
 @ApiExtraModels(AccountInfo)
 @UseGuards(JwtAuthGuard)
@@ -28,7 +28,7 @@ export class AccountController {
   ) {}
 
   @Get('profile')
-  @ApiOperation({ summary: '获取账户资料' })
+  @ApiOperation({ summary: 'Lấy thông tin tài khoản' })
   @ApiResult({ type: AccountInfo })
   @AllowAnon()
   async profile(@AuthUser() user: IAuthUser): Promise<AccountInfo> {
@@ -36,14 +36,14 @@ export class AccountController {
   }
 
   @Get('logout')
-  @ApiOperation({ summary: '账户登出' })
+  @ApiOperation({ summary: 'Đăng xuất tài khoản' })
   @AllowAnon()
   async logout(@AuthUser() user: IAuthUser, @Req() req: FastifyRequest): Promise<void> {
     await this.authService.clearLoginStatus(user, req.accessToken)
   }
 
   @Get('menus')
-  @ApiOperation({ summary: '获取菜单列表' })
+  @ApiOperation({ summary: 'Lấy danh sách menu' })
   @ApiResult({ type: [AccountMenus] })
   @AllowAnon()
   async menu(@AuthUser() user: IAuthUser) {
@@ -51,7 +51,7 @@ export class AccountController {
   }
 
   @Get('permissions')
-  @ApiOperation({ summary: '获取权限列表' })
+  @ApiOperation({ summary: 'Lấy danh sách quyền' })
   @ApiResult({ type: [String] })
   @AllowAnon()
   async permissions(@AuthUser() user: IAuthUser): Promise<string[]> {
@@ -59,21 +59,21 @@ export class AccountController {
   }
 
   @Put('update')
-  @ApiOperation({ summary: '更改账户资料' })
+  @ApiOperation({ summary: 'Cập nhật thông tin tài khoản' })
   @AllowAnon()
   async update(
-    @AuthUser() user: IAuthUser, @Body()
-dto: AccountUpdateDto,
+    @AuthUser() user: IAuthUser,
+    @Body() dto: AccountUpdateDto,
   ): Promise<void> {
     await this.userService.updateAccountInfo(user.uid, dto)
   }
 
   @Post('password')
-  @ApiOperation({ summary: '更改账户密码' })
+  @ApiOperation({ summary: 'Đổi mật khẩu tài khoản' })
   @AllowAnon()
   async password(
-    @AuthUser() user: IAuthUser, @Body()
-dto: PasswordUpdateDto,
+    @AuthUser() user: IAuthUser,
+    @Body() dto: PasswordUpdateDto,
   ): Promise<void> {
     await this.userService.updatePassword(user.uid, dto)
   }

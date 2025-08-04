@@ -15,14 +15,14 @@ import { Public } from '../decorators/public.decorator'
 import { ImageCaptchaDto } from '../dto/captcha.dto'
 import { ImageCaptcha } from '../models/auth.model'
 
-@ApiTags('Captcha - 验证码模块')
+@ApiTags('Captcha - Mã xác thực hình ảnh')
 // @UseGuards(ThrottlerGuard)
 @Controller('auth/captcha')
 export class CaptchaController {
   constructor(@InjectRedis() private redis: Redis) {}
 
   @Get('img')
-  @ApiOperation({ summary: '获取登录图片验证码' })
+  @ApiOperation({ summary: 'Lấy mã xác thực hình ảnh khi đăng nhập' })
   @ApiResult({ type: ImageCaptcha })
   @Public()
   // @Throttle({ default: { limit: 2, ttl: 600000 } })
@@ -43,7 +43,7 @@ export class CaptchaController {
       )}`,
       id: generateUUID(),
     }
-    // 5分钟过期时间
+    // Thời gian hết hạn: 5 phút
     await this.redis.set(genCaptchaImgKey(result.id), svg.text, 'EX', 60 * 5)
     return result
   }
