@@ -16,7 +16,7 @@ import { ResOp } from '~/common/model/response.model'
 import { BYPASS_KEY } from '../decorators/bypass.decorator'
 
 /**
- * 统一处理接口请求与响应结果，如果不需要则添加 @Bypass 装饰器
+ * Unify the processing of interface requests and response results. If not needed, add the @Bypass decorator
  */
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
@@ -37,7 +37,7 @@ export class TransformInterceptor implements NestInterceptor {
     const http = context.switchToHttp()
     const request = http.getRequest<FastifyRequest>()
 
-    // 处理 query 参数，将数组参数转换为数组,如：?a[]=1&a[]=2 => { a: [1, 2] }
+    // Process query parameters and convert array parameters to arrays, such as: ?a[]=1&a[]=2 => { a: [1, 2] }
     request.query = qs.parse(request.url.split('?').at(1))
 
     return next.handle().pipe(

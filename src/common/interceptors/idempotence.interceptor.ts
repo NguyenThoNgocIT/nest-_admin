@@ -27,23 +27,23 @@ export interface IdempotenceOption {
   pendingMessage?: string
 
   /**
-   * 如果重复请求的话，手动处理异常
+   * Nếu yêu cầu được lặp lại, hãy xử lý ngoại lệ theo cách thủ công
    */
   handler?: (req: FastifyRequest) => any
 
   /**
-   * 记录重复请求的时间
+   * Ghi lại thời gian yêu cầu lặp lại
    * @default 60
    */
   expired?: number
 
   /**
-   * 如果 header 没有幂等 key，根据 request 生成 key，如何生成这个 key 的方法
+   * Nếu tiêu đề không có khóa bất biến, làm thế nào để tạo khóa dựa trên yêu cầu?
    */
   generateKey?: (req: FastifyRequest) => string
 
   /**
-   * 仅读取 header 的 key，不自动生成
+   * Chỉ đọc khóa tiêu đề, không tự động tạo
    * @default false
    */
   disableGenerateKey?: boolean
@@ -59,7 +59,7 @@ export class IdempotenceInterceptor implements NestInterceptor {
   async intercept(context: ExecutionContext, next: CallHandler) {
     const request = context.switchToHttp().getRequest<FastifyRequest>()
 
-    // skip Get 请求
+    // skip Get
     if (request.method.toUpperCase() === 'GET')
       return next.handle()
 
@@ -73,8 +73,8 @@ export class IdempotenceInterceptor implements NestInterceptor {
       return next.handle()
 
     const {
-      errorMessage = '相同请求成功后在 60 秒内只能发送一次',
-      pendingMessage = '相同请求正在处理中...',
+      errorMessage = 'Yêu cầu tương tự chỉ có thể được gửi một lần trong vòng 60 giây sau khi thành công',
+      pendingMessage = 'Yêu cầu tương tự đang được xử lý...',
       handler: errorHandler,
       expired = 60,
       disableGenerateKey = false,

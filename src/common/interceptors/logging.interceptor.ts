@@ -19,7 +19,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest()
     const content = `${request.method} -> ${request.url}`
     const isSse = request.headers.accept === 'text/event-stream'
-    this.logger.debug(`+++ 请求：${content}`)
+    this.logger.debug(`+++ ask：${content}`)
     const now = Date.now()
 
     return call$.pipe(
@@ -27,7 +27,7 @@ export class LoggingInterceptor implements NestInterceptor {
         if (isSse)
           return
 
-        this.logger.debug(`--- 响应：${content}${` +${Date.now() - now}ms`}`)
+        this.logger.debug(`--- response：${content}${` +${Date.now() - now}ms`}`)
       },
       ),
     )
