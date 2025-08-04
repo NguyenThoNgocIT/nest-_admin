@@ -1,192 +1,118 @@
-# nest-admin
+# 🌟 nest-admin - Hệ thống quản lý phân quyền đơn giản & hiệu quả
 
-![](https://img.shields.io/github/commit-activity/m/buqiyuan/nest-admin) ![](https://img.shields.io/github/license/buqiyuan/nest-admin) ![](https://img.shields.io/github/repo-size/buqiyuan/nest-admin) ![](https://img.shields.io/github/languages/top/buqiyuan/nest-admin)
+![Commit Activity](https://img.shields.io/github/commit-activity/m/buqiyuan/nest-admin)
+![License](https://img.shields.io/github/license/buqiyuan/nest-admin)
+![Repo Size](https://img.shields.io/github/repo-size/buqiyuan/nest-admin)
+![Top Language](https://img.shields.io/github/languages/top/buqiyuan/nest-admin)
 
-**基于 NestJs + TypeScript + TypeORM + Redis + MySql + Vue3 + Ant Design Vue 编写的一款简单高效的前后端分离的权限管理系统。希望这个项目在全栈的路上能够帮助到你。**
+---
 
-- 前端项目地址：[传送门](https://github.com/buqiyuan/vue3-antdv-admin)
+### ⚙️ Công nghệ sử dụng
 
-## 演示地址
+> **NestJS + TypeScript + TypeORM + Redis + MySQL (Backend)**
+> **Vue3 + Ant Design Vue (Frontend)**
 
-<ul>
-  <li>
-    <details>
-      <summary>
-        <a href="https://vue3-antdv-admin.pages.dev/" target="_blank">
-        https://vue3-antdv-admin.pages.dev/
-        </a>（墙内）
-      </summary>
-      只读，可以完整地预览项目的初始效果
-    </details>
-  </li>
-  <li>
-    <details>
-      <summary>
-        <a href="https://vue3-antd-admin.vercel.app/" target="_blank">
-        https://vue3-antd-admin.vercel.app/
-        </a>（墙外）
-      </summary>
-      <ul>
-        <li>
-        可随意 CRUD，所以你看到的数据可能已经被其他人修改过，而非项目得初始效果，并且数据库的数据会在每天凌晨 4.30 分重置一次。
-        </li>
-        <li>由于是白嫖的国外服务器资源，所以不保熟， 并可能还需要翻墙浏览。</li>
-      </ul>
-    </details>
-  </li>
-  <li>
-   <a href="https://nest-admin.buqiyuan.top/api-docs/" target="_blank">
-      Swagger 文档
-   </a>
-  </li>
-</ul>
+Dự án fullstack tách biệt frontend và backend, dễ mở rộng, có thể dùng làm hệ thống quản lý nội bộ, CMS, CRM, hoặc học tập phát triển web hiện đại.
 
-## 项目启动前的准备工作
+---
 
-- sql 文件：[/deploy/sql/nest_admin.sql](https://github.com/buqiyuan/nest-admin/tree/main/deploy/sql/nest_admin.sql) 用于数据库初始化
-- 项目相关配置，如：配置 mysql 和 redis 连接
-  - 公共配置: [.env](https://github.com/buqiyuan/nest-admin/blob/main/.env)
-  - 开发环境: [.env.development](https://github.com/buqiyuan/nest-admin/blob/main/.env.development)
-  - 生产环境: [.env.production](https://github.com/buqiyuan/nest-admin/blob/main/.env.production)
+## 🚀 Demo
 
-## 环境要求
+| Khu vực | Đường dẫn | Ghi chú |
+|--------|-----------|--------|
+ [https://vue3-antdv-admin.pages.dev](https://vue3-antdv-admin.pages.dev) | Chỉ xem, dữ liệu demo |
+| Quốc tế | [https://vue3-antd-admin.vercel.app](https://vue3-antd-admin.vercel.app) | Có thể CRUD thoải mái, dữ liệu reset mỗi ngày lúc **04:30 (UTC+8)** |
+| API Swagger | [https://nest-admin.buqiyuan.top/api-docs/](https://nest-admin.buqiyuan.top/api-docs/) | Tài liệu API backend |
 
-- `nodejs` `20`+
-- `docker` `20.x`+ ，其中 `docker compose`版本需要 `2.17.0`+
-- `mysql` `8.x`+
-- 使用 [`pnpm`](https://pnpm.io/zh/) 包管理器安装项目依赖
+---
 
-演示环境账号密码：
+## 🔧 Yêu cầu môi trường
 
-|   账号    |  密码  |    权限    |
-| :-------: | :----: | :--------: |
-| admin | a123456 | 超级管理员 |
+| Phần mềm | Phiên bản |
+|----------|------------|
+| Node.js | >= 20 |
+| Docker | >= 20.x |
+| Docker Compose | >= 2.17.0 |
+| MySQL | >= 8.x |
+| Redis | (bắt buộc nếu dùng Redis Cache) |
+| Trình quản lý gói | [pnpm](https://pnpm.io/zh/) |
 
-> 所有新建的用户初始密码都为 a123456
+---
 
-本地部署账号密码：
+## 💾 Chuẩn bị
 
-|   账号    |  密码  |    权限    |
-| :-------: | :----: | :--------: |
-| admin | a123456 | 超级管理员 |
+- **SQL khởi tạo**: [`/deploy/sql/nest_admin.sql`](https://github.com/buqiyuan/nest-admin/tree/main/deploy/sql/nest_admin.sql)
+- **Cấu hình**:
+  - `.env`: Cấu hình chung
+  - `.env.development`: Cấu hình môi trường phát triển
+  - `.env.production`: Cấu hình môi trường sản xuất
 
-## 快速体验
+---
 
-启动成功后，通过 <http://localhost:7001/api-docs/> 访问。
+## 👤 Tài khoản đăng nhập mặc định
+
+| Tài khoản | Mật khẩu | Quyền |
+|----------|----------|--------|
+| `admin`  | `a123456` | Quản trị viên |
+
+> Tất cả tài khoản mới tạo đều có mật khẩu mặc định là `a123456`.
+
+---
+
+## ⚡ Khởi chạy nhanh
 
 ```bash
 pnpm docker:up
-# or
+# hoặc
 docker compose --env-file .env --env-file .env.production up -d --no-build
-```
+Truy cập: http://localhost:7001/api-docs/
 
-停止并删除所有容器
+🛑 Dừng & xóa container:
 
-```bash
 pnpm docker:down
-# or
+# hoặc
 docker compose --env-file .env --env-file .env.production down
-```
+🧼 Xóa image:
 
-删除镜像
-
-```bash
 pnpm docker:rmi
-# or
+# hoặc
 docker rmi buqiyuan/nest-admin-server:stable
-```
+📜 Xem logs:
 
-查看实时日志输出
-
-```bash
 pnpm docker:logs
-# or
+# hoặc
 docker compose --env-file .env --env-file .env.production logs -f
+💻 Phát triển local
+1. Clone mã nguồn:
 
-```
-
-## 本地开发
-
-- 获取项目代码
-
-```bash
 git clone https://github.com/buqiyuan/nest-admin
-```
-
-- 【可选】如果你是新手，还不太会搭建`mysql/redis`，你可以使用 `Docker` 启动指定服务供本地开发时使用, 例如：
-
-```bash
-# 启动MySql服务
-docker compose --env-file .env --env-file .env.development run -d --service-ports mysql
-# 启动Redis服务
-docker compose --env-file .env --env-file .env.development run -d --service-ports redis
-```
-
-- 安装依赖
-
-```bash
 cd nest-admin
-
 pnpm install
+2. Khởi động nhanh các dịch vụ bằng Docker:
+bash
 
-```
+# MySQL
+docker compose --env-file .env --env-file .env.development run -d --service-ports mysql
 
-- 运行
-  启动成功后，通过 <http://localhost:7001/api-docs/> 访问。
+# Redis
+docker compose --env-file .env --env-file .env.development run -d --service-ports redis
+3. Chạy backend:
+bash
 
-```bash
 pnpm dev
-```
+Truy cập: http://localhost:7001/api-docs/
 
-- 打包
+📦 Build & Deploy
 
-```bash
 pnpm build
-```
+🧬 Quản lý database (TypeORM Migration)
+Chạy migration (tạo bảng, dữ liệu):
 
-## 数据库迁移
-
-1. 更新数据库(或初始化数据)
-
-```bash
 pnpm migration:run
-```
+Tạo migration mới:
 
-2. 生成迁移
-
-```bash
 pnpm migration:generate
-```
+Rollback migration:
 
-3. 回滚到最后一次更新
-
-```bash
 pnpm migration:revert
-```
-
-更多细节，请移步至[官方文档](https://typeorm.io/migrations)
-
-> [!TIP]
-> 如果你的`实体类`或`数据库配置`有更新，请执行`npm run build`后再进行数据库迁移相关操作。
-
-## 系统截图
-
-![](https://s1.ax1x.com/2021/12/11/oTi1nf.png)
-
-![](https://s1.ax1x.com/2021/12/11/oTithj.png)
-
-![](https://s1.ax1x.com/2021/12/11/oTirHU.png)
-
-![](https://s1.ax1x.com/2021/12/11/oTia3n.png)
-
-### 欢迎 Star && PR
-
-**如果项目有帮助到你可以点个 Star 支持下。有更好的实现欢迎 PR。**
-
-### 致谢
-
-- [sf-nest-admin](https://github.com/hackycy/sf-nest-admin)
-
-### LICENSE
-
-[MIT](LICENSE)
+💡 Lưu ý: Nếu bạn thay đổi Entity hoặc cấu hình database, hãy chạy pnpm build trước khi migrate.
