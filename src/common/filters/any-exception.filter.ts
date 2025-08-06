@@ -17,7 +17,6 @@ import { isDev } from '~/global/env'
 interface myError {
   readonly status: number
   readonly statusCode?: number
-
   readonly message?: string
 }
 
@@ -39,26 +38,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const status = this.getStatus(exception)
     let message = this.getErrorMessage(exception)
 
-    // 系统内部错误时
+    // Khi xảy ra lỗi nội bộ hệ thống
     if (
       status === HttpStatus.INTERNAL_SERVER_ERROR
       && !(exception instanceof BusinessException)
     ) {
       Logger.error(exception, undefined, 'Catch')
 
-      // 生产环境下隐藏错误信息
+      // Ẩn thông tin lỗi trong môi trường production
       if (!isDev)
         message = ErrorEnum.SERVER_ERROR?.split(':')[1]
     }
     else {
       this.logger.warn(
-        `错误信息：(${status}) ${message} Path: ${decodeURI(url)}`,
+        `Thông tin lỗi: (${status}) ${message} Đường dẫn: ${decodeURI(url)}`,
       )
     }
 
-    const apiErrorCode = exception instanceof BusinessException ? exception.getErrorCode() : status
+    const apiErrorCode = exception instanceof BusinessException
+      ? exception.getErrorCode()
+      : status
 
-    // 返回基础响应结果
+    // Trả về định dạng phản hồi chuẩn
     const resBody: IBaseResponse = {
       code: apiErrorCode,
       message,
@@ -73,12 +74,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return exception.getStatus()
     }
     else if (exception instanceof QueryFailedError) {
-      // console.log('driverError', exception.driverError.code)
+      // Lỗi truy vấn CSDL
       return HttpStatus.INTERNAL_SERVER_ERROR
     }
     else {
       return (exception as myError)?.status
-        ?? (exception as myError)?.statusCode ?? HttpStatus.INTERNAL_SERVER_ERROR
+        ?? (exception as myError)?.statusCode
+        ?? HttpStatus.INTERNAL_SERVER_ERROR
     }
   }
 
@@ -89,19 +91,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
     else if (exception instanceof QueryFailedError) {
       return exception.message
     }
-
     else {
-      return (exception as any)?.response?.message ?? (exception as myError)?.message ?? `${exception}`
+      return (exception as any)?.response?.message
+        ?? (exception as myError)?.message
+        ?? `${exception}`
     }
   }
 
   registerCatchAllExceptionsHook() {
     process.on('unhandledRejection', (reason) => {
-      console.error('unhandledRejection: ', reason)
+      console.error('Lỗi không được xử lý (unhandledRejection): ', reason)
     })
 
     process.on('uncaughtException', (err) => {
-      console.error('uncaughtException: ', err)
+      console.error('Lỗi không bị bắt (uncaughtException): ', err)
     })
   }
 }

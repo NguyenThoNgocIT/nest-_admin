@@ -21,7 +21,7 @@ import { RbacGuard } from './modules/auth/guards/rbac.guard'
 import { HealthModule } from './modules/health/health.module'
 import { NetdiskModule } from './modules/netdisk/netdisk.module'
 
-import { OdooService } from './modules/odoo/odoo.service'
+import { OdooModule } from './modules/odoo/odoo.module'
 import { SseModule } from './modules/sse/sse.module'
 import { SystemModule } from './modules/system/system.module'
 
@@ -66,6 +66,7 @@ import { SocketModule } from './socket/socket.module'
     SseModule,
     NetdiskModule,
     TodoModule,
+    OdooModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
@@ -78,7 +79,6 @@ import { SocketModule } from './socket/socket.module'
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RbacGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    OdooService,
 
   ],
 })

@@ -28,7 +28,7 @@ export class ResourceGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<FastifyRequest>()
     const isSse = request.headers.accept === 'text/event-stream'
-    // 忽略 sse 请求
+    // Bỏ qua các yêu cầu sse
     if (isPublic || isSse)
       return true
 
@@ -37,7 +37,8 @@ export class ResourceGuard implements CanActivate {
     if (!user)
       return false
 
-    // 如果是检查资源所属，且不是超级管理员，还需要进一步判断是否是自己的数据
+    // // Nếu bạn đang kiểm tra quyền sở hữu tài nguyên và không phải là quản trị viên siêu cấp,
+    // bạn cần xác định thêm xem đó có phải là dữ liệu của riêng bạn không
     const { entity, condition } = this.reflector.get<ResourceObject>(
       RESOURCE_KEY,
       context.getHandler(),
@@ -47,7 +48,7 @@ export class ResourceGuard implements CanActivate {
       const repo: Repository<any> = this.dataSource.getRepository(entity)
 
       /**
-       * 获取请求中的 items (ids) 验证数据拥有者
+       * Get the items (ids) in the request to verify the data owner
        * @param request
        */
       const getRequestItems = (request?: FastifyRequest): number[] => {

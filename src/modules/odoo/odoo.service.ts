@@ -34,130 +34,150 @@ export class OdooService {
   }
 
   /**
-   * Lấy sessionId từ Odoo để xác thực cho các request sau.
+   * Lấy API key từ Odoo bằng endpoint /odoo_connect
    */
-  private async getSessionId(): Promise<string> {
-    if (this.sessionId)
-      return this.sessionId
-    const authUrl = `/api/auth/get_token`
-    this.logger.log(`Đang lấy session_id từ Odoo: ${authUrl}`)
+  async getApiKey(): Promise<string> {
+    if (this.apiKey)
+      return this.apiKey
+
+    const url = '/odoo_connect'
+    this.logger.log(`Đang lấy API key từ Odoo: ${url}`)
 
     try {
-      const response = await this.axios.post(authUrl, {
-        jsonrpc: '2.0',
-        params: {
+      const response = await this.axios.get(url, {
+        headers: {
           login: this.login,
           password: this.password,
           db: this.db,
-          api_key: this.apiKey,
         },
       })
-      // Tùy thuộc vào response Odoo, lấy session_id
-      const sessionId = response.data?.result?.session_id
-      if (!sessionId)
-        throw new Error('Không lấy được session_id từ Odoo.')
-      this.sessionId = sessionId
-      return sessionId
+
+      let data: any
+      try {
+        if (typeof response.data === 'string') {
+          data = JSON.parse(response.data)
+        }
+        else {
+          data = response.data
+        }
+      }
+      catch (err) {
+        data = response.data
+      }
+
+      this.apiKey = data.apiKey
+      return this.apiKey
     }
     catch (error) {
-      this.logger.error('Odoo authentication failed:', error.response?.data || error.message)
-      throw new Error('Could not authenticate with Odoo.')
+      this.logger.error('Lỗi khi lấy API key:', error)
+      throw error
     }
   }
 
   /**
-   * Gọi Odoo API chung, xác thực qua sessionId.
+   * Gọi Odoo API chung, sử dụng API key
    */
-  private async callOdooApi(
+  async callOdooApi(
     httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE',
     model: string,
     recordId: number | null = null,
     body: any = {},
   ) {
-    const sessionId = await this.getSessionId()
-    let url = `/api/${model}`
-    if (recordId)
-      url += `/${recordId}`
+    const apiKey = await this.getApiKey()
+    const url = recordId ? `/send_request?model=${model}&Id=${recordId}` : `/send_request?model=${model}`
 
     try {
       const response = await this.axios.request({
         method: httpMethod,
         url,
         headers: {
-          'Session-Id': sessionId,
+          'api-key': apiKey,
+          'login': this.login,
+          'password': this.password,
         },
         data: body,
       })
 
-      // Xử lý dữ liệu trả về tùy thuộc vào cấu trúc Odoo của bạn
-      return response.data?.result || response.data
+      const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
+      if (typeof data === 'string' && data.includes('<html>')) {
+        throw new Error(`Lỗi từ Odoo: ${data}`)
+      }
+      return data.records || data['New resource'] || data['Updated resource'] || data['Resource deleted'] || data
     }
     catch (error) {
-      this.logger.error(
-        `Failed to call Odoo API [${httpMethod}] ${url}:`,
-        error.response?.data || error.message,
-      )
-      // Nếu session hết hạn, xóa để lần sau lấy lại
-      if (
-        error.response?.status === 401
-        || (typeof error.response?.data === 'string'
-          && error.response.data.includes('Invalid Session'))
-      ) {
-        this.sessionId = null
+      this.logger.error(`Gọi Odoo API [${httpMethod}] ${url} thất bại:`, error.response?.data || error.message)
+      if (error.response?.status === 401) {
+        this.apiKey = null // Xóa API key để lấy lại
       }
       throw error
     }
   }
 
   /**
-   * Tìm kiếm Partner trong Odoo bằng email
+   * Tìm Partner trong Odoo bằng email
    */
   async findPartnerByEmail(email: string): Promise<any | null> {
     if (!email)
       return null
 
-    this.logger.log('Fetching all partners from Odoo to find by email (performance warning)...')
-    const response = await this.callOdooApi('GET', 'res.partner', null, {
-      fields: ['id', 'name', 'email'],
-    })
-
-    if (!Array.isArray(response))
+    this.logger.log(`Tìm partner theo email: ${email}`)
+    try {
+      const response = await this.callOdooApi('GET', 'res.partner', null, {
+        fields: ['id', 'name', 'email'],
+        domain: [['email', '=', email]],
+      })
+      return response && response.length > 0 ? response[0] : null
+    }
+    catch (error) {
+      this.logger.error(`Tìm partner theo email ${email} thất bại:`, error.message)
       return null
-
-    return response.find((p: any) => p.email === email) || null
+    }
   }
 
   /**
-   * Tạo hoặc Cập nhật một Partner trong Odoo.
+   * Tạo hoặc cập nhật Partner trong Odoo
    */
   async syncPartner(data: OdooPartnerData): Promise<{ id: number }> {
-    this.logger.log(`Syncing partner ${data.name} (${data.email}) to Odoo.`)
+    this.logger.log(`Đồng bộ partner ${data.name} (${data.email}) với Odoo.`)
     const existingPartner = await this.findPartnerByEmail(data.email)
 
+    const values = {
+      name: data.name,
+      ...(data.email && { email: data.email }),
+      ...(data.phone && { phone: data.phone }),
+      ...(data.active !== undefined && { active: data.active }),
+    }
+
     if (existingPartner) {
-      const partnerId = existingPartner.id
-      this.logger.log(`Partner found (ID: ${partnerId}). Updating...`)
-      const result = await this.callOdooApi('PUT', 'res.partner', partnerId, { values: data })
-      return Array.isArray(result) ? result[0] : result
+      this.logger.log(`Tìm thấy partner (ID: ${existingPartner.id}). Đang cập nhật...`)
+      return await this.callOdooApi('PUT', 'res.partner', existingPartner.id, {
+        fields: ['id', 'name', 'email', 'phone'],
+        values,
+      })
     }
     else {
-      this.logger.log(`Partner not found. Creating...`)
-      const result = await this.callOdooApi('POST', 'res.partner', null, { values: data })
-      return Array.isArray(result) ? result[0] : result
+      this.logger.log(`Không tìm thấy partner. Đang tạo mới...`)
+      return await this.callOdooApi('POST', 'res.partner', null, {
+        fields: ['id', 'name', 'email', 'phone'],
+        values,
+      })
     }
   }
 
   /**
-   * Vô hiệu hóa một Partner trong Odoo bằng cách set active = false.
+   * Vô hiệu hóa Partner trong Odoo
    */
   async deactivatePartnerByEmail(email: string): Promise<void> {
     const partner = await this.findPartnerByEmail(email)
     if (partner) {
-      this.logger.log(`Deactivating partner ID ${partner.id} in Odoo.`)
-      await this.callOdooApi('PUT', 'res.partner', partner.id, { values: { active: false } })
+      this.logger.log(`Vô hiệu hóa partner ID ${partner.id} trong Odoo.`)
+      await this.callOdooApi('PUT', 'res.partner', partner.id, {
+        fields: ['id', 'active'],
+        values: { active: false },
+      })
     }
     else {
-      this.logger.warn(`Tried to deactivate a partner with email ${email}, but not found in Odoo.`)
+      this.logger.warn(`Không tìm thấy partner với email ${email} để vô hiệu hóa.`)
     }
   }
 }
