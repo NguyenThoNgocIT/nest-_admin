@@ -20,7 +20,7 @@ export class BaseService<E extends ObjectLiteral, R extends Repository<E> = Repo
   async findOne(id: number): Promise<E> {
     const item = await this.repository.createQueryBuilder().where({ id }).getOne()
     if (!item)
-      throw new NotFoundException('未找到该记录')
+      throw new NotFoundException('Không tìm thấy hồ sơ')
 
     return item
   }

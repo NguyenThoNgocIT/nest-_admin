@@ -13,7 +13,7 @@ import { LocalGuard } from './guards/local.guard'
 import { LoginToken } from './models/auth.model'
 import { CaptchaService } from './services/captcha.service'
 
-@ApiTags('Auth - 认证模块')
+@ApiTags('Auth - Mô-đun xác thực')
 @UseGuards(LocalGuard)
 @Public()
 @Controller('auth')
@@ -25,7 +25,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  @ApiOperation({ summary: '登录' })
+  @ApiOperation({ summary: 'Đăng nhập' })
   @ApiResult({ type: LoginToken })
   async login(@Body() dto: LoginDto, @Ip()ip: string, @Headers('user-agent')ua: string): Promise<LoginToken> {
     await this.captchaService.checkImgCaptcha(dto.captchaId, dto.verifyCode)
@@ -39,7 +39,7 @@ export class AuthController {
   }
 
   @Post('register')
-  @ApiOperation({ summary: '注册' })
+  @ApiOperation({ summary: 'Đăng ký' })
   async register(@Body() dto: RegisterDto): Promise<void> {
     await this.userService.register(dto)
   }

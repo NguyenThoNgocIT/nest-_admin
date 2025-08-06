@@ -55,16 +55,20 @@ export class JwtAuthGuard extends AuthGuard(AuthStrategy.JWT) {
       context.getHandler(),
       context.getClass(),
     ])
+
     const request = context.switchToHttp().getRequest<FastifyRequest<RequestType>>()
-    // const response = context.switchToHttp().getResponse<FastifyReply>()
+
+    // ✅ Bỏ qua xác thực nếu URL nằm trong whitelist
     if (RouterWhiteList.includes(request.routeOptions.url))
       return true
-    // TODO 此处代码的作用是判断如果在演示环境下，则拒绝用户的增删改操作，去掉此代码不影响正常的业务逻辑
+
+    // ✅ Trong chế độ demo, chặn các thao tác thêm/sửa/xóa (ngoại trừ login)
     if (request.method !== 'GET' && !request.url.includes('/auth/login'))
       checkIsDemoMode()
 
     const isSse = request.headers.accept === 'text/event-stream'
 
+    // ✅ Đối với SSE, nếu không có Authorization Header thì lấy token từ query
     if (isSse && !request.headers.authorization?.startsWith('Bearer ')) {
       const { token } = request.query
       if (token)
@@ -73,7 +77,7 @@ export class JwtAuthGuard extends AuthGuard(AuthStrategy.JWT) {
 
     const token = this.jwtFromRequestFn(request)
 
-    // 检查 token 是否在黑名单中
+    // ✅ Kiểm tra token có nằm trong danh sách đen (đăng xuất, bị vô hiệu hóa)
     if (await this.redis.get(genTokenBlacklistKey(token)))
       throw new BusinessException(ErrorEnum.INVALID_LOGIN)
 
@@ -84,18 +88,19 @@ export class JwtAuthGuard extends AuthGuard(AuthStrategy.JWT) {
       result = await super.canActivate(context)
     }
     catch (err) {
-      // 需要后置判断 这样携带了 token 的用户就能够解析到 request.user
+      // ✅ Nếu route là public thì cho qua
       if (isPublic)
         return true
 
+      // ✅ Nếu không có token thì báo lỗi chưa đăng nhập
       if (isEmpty(token))
-        throw new UnauthorizedException('未登录')
+        throw new UnauthorizedException('Bạn chưa đăng nhập')
 
-      // 在 handleRequest 中 user 为 null 时会抛出 UnauthorizedException
+      // ✅ Nếu là lỗi UnauthorizedException thì trả lỗi không hợp lệ
       if (err instanceof UnauthorizedException)
         throw new BusinessException(ErrorEnum.INVALID_LOGIN)
 
-      // 判断 token 是否有效且存在, 如果不存在则认证失败
+      // ✅ Kiểm tra token có hợp lệ không (hết hạn hoặc bị giả mạo)
       const isValid = isNil(token)
         ? undefined
         : await this.tokenService.checkAccessToken(token!)
@@ -104,26 +109,25 @@ export class JwtAuthGuard extends AuthGuard(AuthStrategy.JWT) {
         throw new BusinessException(ErrorEnum.INVALID_LOGIN)
     }
 
-    // SSE 请求
+    // ✅ Trường hợp SSE: kiểm tra uid trong path khớp với uid trong token
     if (isSse) {
       const { uid } = request.params
 
       if (Number(uid) !== request.user.uid)
-        throw new UnauthorizedException('路径参数 uid 与当前 token 登录的用户 uid 不一致')
+        throw new UnauthorizedException('UID trong đường dẫn không khớp với người dùng đang đăng nhập')
     }
 
+    // ✅ Kiểm tra phiên bản mật khẩu: nếu đổi mật khẩu giữa chừng thì đăng nhập lại
     const pv = await this.authService.getPasswordVersionByUid(request.user.uid)
     if (pv !== `${request.user.pv}`) {
-      // 密码版本不一致，登录期间已更改过密码
       throw new BusinessException(ErrorEnum.INVALID_LOGIN)
     }
 
-    // 不允许多端登录
+    // ✅ Nếu không cho phép đăng nhập nhiều thiết bị thì kiểm tra token
     if (!this.appConfig.multiDeviceLogin) {
       const cacheToken = await this.authService.getTokenByUid(request.user.uid)
 
       if (token !== cacheToken) {
-        // 与redis保存不一致 即二次登录
         throw new BusinessException(ErrorEnum.ACCOUNT_LOGGED_IN_ELSEWHERE)
       }
     }
@@ -132,7 +136,7 @@ export class JwtAuthGuard extends AuthGuard(AuthStrategy.JWT) {
   }
 
   handleRequest(err, user, info) {
-    // You can throw an exception based on either "info" or "err" arguments
+    // ✅ Xử lý lỗi xác thực — nếu không có user thì ném lỗi
     if (err || !user)
       throw err || new UnauthorizedException()
 

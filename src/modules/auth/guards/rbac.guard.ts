@@ -34,7 +34,8 @@ export class RbacGuard implements CanActivate {
     if (!user)
       throw new BusinessException(ErrorEnum.INVALID_LOGIN)
 
-    // allowAnon 是需要登录后可访问(无需权限), Public 则是无需登录也可访问.
+    // allowAnon có nghĩa là bạn cần phải đăng nhập để truy cập (không yêu cầu quyền), trong khi
+    // Public có nghĩa là bạn có thể truy cập mà không cần đăng nhập.
     const allowAnon = this.reflector.get<boolean>(
       ALLOW_ANON_KEY,
       context.getHandler(),
@@ -46,11 +47,11 @@ export class RbacGuard implements CanActivate {
       string | string[]
     >(PERMISSION_KEY, [context.getHandler(), context.getClass()])
 
-    // 控制器没有设置接口权限，则默认通过
+    // Nếu bộ điều khiển không thiết lập quyền giao diện, quyền đó sẽ được truyền theo mặc định.
     if (!payloadPermission)
       return true
 
-    // 管理员放开所有权限
+    // Quản trị viên giải phóng tất cả các quyền
     if (user.roles.includes(Roles.ADMIN))
       return true
 
@@ -60,7 +61,7 @@ export class RbacGuard implements CanActivate {
 
     // handle permission strings
     if (Array.isArray(payloadPermission)) {
-      // 只要有一个权限满足即可
+      // Miễn là một quyền được đáp ứng
       canNext = payloadPermission.every(i => allPermissions.includes(i))
     }
 

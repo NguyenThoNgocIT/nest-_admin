@@ -1,21 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger'
 
 export class AccountInfo {
-  @ApiProperty({ description: '用户名' })
+  @ApiProperty({ description: 'username' })
   username: string
 
-  @ApiProperty({ description: '昵称' })
+  @ApiProperty({ description: 'name' })
   nickname: string
 
-  @ApiProperty({ description: '邮箱' })
+  @ApiProperty({ description: 'email' })
   email: string
 
-  @ApiProperty({ description: '手机号' })
+  @ApiProperty({ description: 'phone' })
   phone: string
 
-  @ApiProperty({ description: '备注' })
+  @ApiProperty({ description: 'ghi chú' })
   remark: string
 
-  @ApiProperty({ description: '头像' })
+  @ApiProperty({ description: 'avatar' })
   avatar: string
 }
