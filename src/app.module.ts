@@ -1,5 +1,4 @@
 import type { FastifyRequest } from 'fastify'
-
 import { ClassSerializerInterceptor, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 
