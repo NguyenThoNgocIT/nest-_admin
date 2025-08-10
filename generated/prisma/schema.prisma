@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model User {
+  id              String   @id
+  username        String   @unique
+  password        String
+  emailUser       String   @default("")
+  inviteBy        String   @default("")
+  passwordExpired DateTime @default(now()) @map("password_expired")
+  passwordCreated DateTime @default(now()) @map("password_created")
+  passwordAttempt Int      @default(0) @map("password_attempt")
+
+  is_owner           Boolean      @default(false)
+  mfaTelegramEnabled Boolean      @default(false) @map("mfa_telegram_enabled")
+  mfaTotpEnabled     Boolean      @default(false) @map("mfa_totp_enabled")
+  telegramUsername   String?      @map("telegram_username")
+  totpSecret         String?      @map("totp_secret")
+  enabled            Boolean      @default(true)
+  modified           DateTime     @updatedAt
+  created            DateTime     @default(now())
+  activities         Activity[]
+  apiKeys            ApiKey[]
+  roles              RolePlayer[]
+  sessions           Session[]
+
+  @@index([username])
+  @@map("users")
+}
+
+model Permission {
+  id          String           @id
+  title       String           @unique
+  description String?
+  roles       RolePermission[]
+
+  @@index([title])
+  @@map("permissions")
+}
+
+model Role {
+  id          String           @id
+  title       String           @unique
+  description String?
+  enabled     Boolean          @default(true)
+  modified    DateTime         @updatedAt
+  created     DateTime         @default(now())
+  permissions RolePermission[]
+  players     RolePlayer[]
+
+  @@index([title])
+  @@map("roles")
+}
+
+model RolePermission {
+  id           String     @id
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  modified     DateTime   @updatedAt
+  created      DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@index([roleId])
+  @@map("role_permissions")
+}
+
+model RolePlayer {
+  id       String   @id
+  playerId String   @map("player_id")
+  roleId   String   @map("role_id")
+  modified DateTime @updatedAt
+  created  DateTime @default(now())
+  player   User     @relation(fields: [playerId], references: [id])
+  role     Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([roleId, playerId])
+  @@index([playerId])
+  @@index([roleId])
+  @@map("roles_players")
+}
+
+model Session {
+  id          String     @id
+  device      String
+  ip          String
+  token       String     @unique
+  createdById String     @map("created_by_id")
+  expired     DateTime
+  revoked     Boolean    @default(false)
+  modified    DateTime   @updatedAt
+  created     DateTime   @default(now())
+  activities  Activity[]
+  createdBy   User       @relation(fields: [createdById], references: [id])
+
+  @@index([createdById])
+  @@map("sessions")
+}
+
+model ApiKey {
+  id        String       @id
+  type      API_KEY_TYPE @default(PUBLIC)
+  name      String
+  key       String       @unique
+  hash      String
+  enabled   Boolean      @default(true)
+  startDate DateTime     @default(now()) @map("start_date")
+  endDate   DateTime?    @map("end_date")
+  created   DateTime     @default(now())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+
+  @@map("api_keys")
+}
+
+model Activity {
+  id          String   @id
+  type        String
+  description String?
+  device      String
+  ip          String
+  sessionId   String?  @map("session_id")
+  reference   Json?
+  createdById String   @map("created_by_id")
+  modified    DateTime @updatedAt
+  created     DateTime @default(now())
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  session     Session? @relation(fields: [sessionId], references: [id])
+
+  @@index([type])
+  @@index([ip])
+  @@index([createdById])
+  @@index([sessionId])
+  @@map("activities")
+}
+
+model I18n {
+  id  String  @id
+  key String  @unique
+  en  String?
+  zh  String?
+  vi  String?
+  ko  String?
+
+  @@index([key])
+  @@map("i18n")
+}
+
+model IPWhitelist {
+  id   String  @id
+  ip   String  @unique
+  note String?
+
+  @@index([ip])
+  @@map("ip_whitelist")
+}
+
+model Setting {
+  id          String            @id
+  key         String            @unique
+  value       String
+  description String?
+  isSecret    Boolean           @default(false) @map("is_secret")
+  type        SETTING_DATA_TYPE @default(STRING)
+
+  @@index([key])
+  @@map("settings")
+}
+
+model Proxy {
+  id       String        @id
+  protocol ProxyProtocol
+  host     String
+  port     Int
+  username String
+  password String
+  enabled  Boolean       @default(true)
+  modified DateTime      @updatedAt
+  created  DateTime      @default(now())
+
+  @@unique([host, port, protocol, username, password])
+  @@map("proxies")
+}
+
+model TelegramTemplate {
+  id          String   @id
+  name        String
+  description String?
+  message     String?
+  photos      String[]
+  videos      String[]
+  buttons     Json?
+  created     DateTime @default(now())
+  modified    DateTime @updatedAt
+
+  @@map("telegram_templates")
+}
+
+model TelegramChat {
+  id          String             @id
+  name        String
+  type        TELEGRAM_CHAT_TYPE @default(CHAT)
+  description String?
+  chatId      String
+  created     DateTime           @default(now())
+  modified    DateTime           @updatedAt
+
+  @@map("telegram_chats")
+}
+
+model TelegramBot {
+  id          String   @id
+  name        String
+  description String?
+  enabled     Boolean  @default(true)
+  token       String
+  created     DateTime @default(now())
+  modified    DateTime @updatedAt
+
+  @@map("telegram_bots")
+}
+
+enum API_KEY_TYPE {
+  PUBLIC
+  PRIVATE
+}
+
+enum SETTING_DATA_TYPE {
+  STRING
+  NUMBER
+  BOOLEAN
+  DATE
+}
+
+enum ProxyProtocol {
+  HTTP
+  HTTPS
+  SOCKS4
+  SOCKS5
+}
+
+enum TELEGRAM_CHAT_TYPE {
+  CHAT
+  GROUP
+  CHANEL
+}
