@@ -1,7 +1,8 @@
-import { Controller, Get, Query, Res, Injectable } from '@nestjs/common';
+import { Controller, Get, Query, Res, Injectable, BadRequestException, Post, Body } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { Public } from '~/modules/auth/decorators/public.decorator';
+import { AuthTikTokShopService } from '../tiktok.services/auth.service';
 
 @Injectable()
 export class TikTokOAuthService {
@@ -9,7 +10,7 @@ export class TikTokOAuthService {
 
     generateAuthUrl(): string {
         const appKey = this.configService.get<string>('TIKTOK_SHOP_API_KEY');
-        const redirectUri = encodeURIComponent('http://localhost:7001/api/oauth/tiktok/callback');
+        const redirectUri =this.configService.get<string>('TIKTOK_OAUTH_REDIRECT_URI');
         const state = Math.random().toString(36).substring(2, 15); // Random state
         
         // TikTok Shop OAuth URL
@@ -28,6 +29,7 @@ export class TikTokOAuthService {
 export class TikTokOAuthController {
     constructor(
         private oauthService: TikTokOAuthService,
+        private oauthtiktokService: AuthTikTokShopService,
         private configService: ConfigService
     ) {}
 
@@ -37,48 +39,71 @@ export class TikTokOAuthController {
         const authUrl = this.oauthService.generateAuthUrl();
         return res.redirect(authUrl);
     }
+@Post('access-token')
+async handle(
+  @Body('code') code: string,
+) {
+  if (!code) {
+    return {
+      success: false,
+      message: 'Authorization code is missing in the request body.'
+    };
+  }
 
-    // Bước 2: TikTok sẽ redirect về đây với authorization code
-    @Get('tiktok/callback')
-    async handleCallback(
-        @Query('code') code: string,
-        @Query('state') state: string,
-        @Query('error') error: string,
-        @Res() res: Response
-    ) {
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                error: error,
-                message: 'User denied authorization or other error occurred'
-            });
-        }
+  try {
+    const tokenData = await this.oauthtiktokService.getAccessToken(code);
+    return {
+      success: true,
+      message: 'Authorization successful and token obtained.',
+      tokens: tokenData
+    };
+  } catch (e: any) {
+    // Xử lý lỗi từ dịch vụ lấy token
+    return {
+      success: false,
+      message: e.message || 'Failed to exchange authorization code.',
+    };
+  }
+}
 
-        if (!code) {
-            return res.status(400).json({
-                success: false,
-                error: 'No authorization code received'
-            });
-        }
+@Get('tiktok/callback')
+async handleCallback(
+  @Query('app_key') appKey: string,
+  @Query('code') code: string,
+  @Query('locale') locale: string,
+  @Query('shop_region') shopRegion: string,
+  @Query('state') state: string,
+) {
+  // TODO: So sánh state nhận được với state đã lưu để xác thực
+  console.log('Received callback from TikTok:', { appKey, code, locale, shopRegion, state });
 
-        console.log('✅ Authorization Code received:', code);
-        console.log('State:', state);
+  // Kiểm tra xem code có tồn tại không
+  if (!code) {
+    return {
+      success: false,
+      message: 'Authorization code is missing.'
+    };
+  }
 
-        // Hiển thị code để bạn copy vào .env
-        return res.json({
-            success: true,
-            message: 'Authorization successful! Copy this code to your .env file as TIKTOK_SHOP_AUTH_CODE',
-            authorization_code: code,
-            state: state,
-            instructions: [
-                '1. Copy the authorization_code above',
-                '2. Add to your .env file: TIKTOK_SHOP_AUTH_CODE=' + code,
-                '3. Restart your server',
-                '4. Test with GET /api/test/token'
-            ]
-        });
-    }
+  try {
+    // Gọi service để trao đổi mã code lấy access token
+    const tokenData = await this.oauthtiktokService.getAccessToken(code);
 
+    // TODO: lưu tokenData.access_token, tokenData.refresh_token, expire_in vào DB
+    // TODO: trả về thông báo hoặc chuyển hướng người dùng đến trang thành công
+    
+    return {
+      success: true,
+      message: 'Authorization successful and token obtained.',
+      tokens: tokenData
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      message: e.message || 'Failed to exchange authorization code',
+    };
+  }
+}
     // Helper endpoint để check current auth code
     @Get('tiktok/check')
     checkAuthCode() {
@@ -92,5 +117,33 @@ export class TikTokOAuthController {
             has_app_key: !!appKey,
             message: authCode ? 'Auth code is configured' : 'Need to run OAuth flow first'
         };
+    }
+    // Endpoint mới để test lấy access token
+    @Get('test-token')
+    async testTokenFlow() {
+        const authCode = this.configService.get<string>('TIKTOK_SHOP_AUTH_CODE');
+
+        if (!authCode) {
+            return {
+                success: false,
+                message: 'No authorization code found in .env. Please run the OAuth flow first.'
+            };
+        }
+
+        try {
+            const tokenData = await this.oauthtiktokService.getAccessToken(authCode);
+            // Bạn nên lưu token này vào cơ sở dữ liệu để sử dụng lâu dài
+            console.log('Access Token & Refresh Token:', tokenData);
+            return {
+                success: true,
+                message: 'Successfully exchanged authorization code for access and refresh tokens.',
+                data: tokenData
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.message
+            };
+        }
     }
 }

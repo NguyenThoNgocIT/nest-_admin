@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { generateSignature } from 'src/common';
+import axios from 'axios';
 
 @Injectable()
 export class AuthTikTokShopService {
@@ -11,44 +12,53 @@ export class AuthTikTokShopService {
         private readonly configService: ConfigService,
     ) { }
 
-    async getAccessToken(): Promise<any> {
-        const apiKey = this.configService.get<string>('TIKTOK_SHOP_API_KEY');
-        const secret = this.configService.get<string>('TIKTOK_SHOP_SECRET');
-        const auth_code = this.configService.get<string>('TIKTOK_SHOP_AUTH_CODE'); // Sửa lỗi này
+async getAccessToken(authCode: string) {
+    // URL chính xác từ tài liệu của TikTok Business API
+    const tokenUrl = 'https://business-api.tiktok.com/open_api/v1.3/tt_user/oauth2/token/';
 
-        const params = {
-            app_key: apiKey,
-            app_secret: secret,
-            auth_code: auth_code,
-            grant_type: "authorized_code"
-        };
+    const client_id = this.configService.get<string>('TIKTOK_SHOP_API_KEY');
+    const client_secret = this.configService.get<string>('TIKTOK_SHOP_SECRET');
+    const redirect_uri = this.configService.get<string>('TIKTOK_OAUTH_REDIRECT_URI');
 
-        const url = `${this.configService.get<string>('TIKTOK_SHOP_API_URL')}/token/get`;
+    console.log('[Auth] tokenUrl =', tokenUrl);
+    console.log('[Auth] client_id =', client_id);
+    console.log('[Auth] client_secret =', client_secret);
 
-        console.log('Calling TikTok API:', url);
-        console.log('Params:', { ...params, app_secret: '***hidden***' });
+    // Payload với các tham số đúng như tài liệu
+    const payload = {
+        client_id: client_id,
+        client_secret: client_secret,
+        grant_type: 'authorization_code',
+        auth_code: authCode,
+        redirect_uri: redirect_uri
+    };
 
-        try {
-            const response = await firstValueFrom(
-                this.httpService.post(url, params, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }),
-            );
-            
-            console.log('Token response:', response.data);
+    try {
+        const response = await axios.post(tokenUrl, payload, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.data?.access_token) {
             return response.data;
-        } catch (error) {
-            console.error('Token error details:', {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                url: url
-            });
-            throw new Error(`Failed to get access token: ${error.message}`);
         }
+
+        throw new Error(`TikTok API error: ${JSON.stringify(response.data)}`);
+    } catch (error) {
+        console.error('TikTok API error details:', {
+            url: error.config?.url,
+            status: error.response?.status,
+            headers: error.response?.headers,
+            data: error.response?.data
+        });
+
+        const apiError = error.response?.data || error.message;
+        console.error('❌ TikTok API error:', apiError);
+
+        throw new Error(`Failed to get access token: ${error.response?.data?.message || error.message}`);
     }
+}
 
     async getAuthShop(app_key?: string): Promise<any> {
         const apiKey = this.configService.get<string>('TIKTOK_SHOP_API_KEY');
@@ -77,7 +87,7 @@ export class AuthTikTokShopService {
                     }
                 }),
             );
-            
+
             console.log('Shop response:', response.data);
             return response?.data?.shops;
         } catch (error) {
