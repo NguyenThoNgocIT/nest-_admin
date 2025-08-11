@@ -11,7 +11,7 @@ function objKeySort(obj) {
   return newObj
 }
 /// dùng để tạo signature cho các yêu cầu đến tiktok shop api
-export function generateSignature(params: any, body: string, path: string): string {
+export function generateSignature(params: any, body: string, path: string ): string {
   const appSecret = process.env.TIKTOK_SHOP_SECRET
   const sortParam = objKeySort(params)
   let signstring = appSecret + path

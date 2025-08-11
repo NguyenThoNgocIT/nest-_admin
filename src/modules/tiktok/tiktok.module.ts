@@ -1,19 +1,23 @@
 import { HttpModule } from "@nestjs/axios";
 import { Module } from "@nestjs/common";
-import { ProductTiktokController } from "~/integrations/tiktok/tiktok.controller/product.controller";
 import { AuthTikTokShopService } from "~/integrations/tiktok/tiktok.services/auth.service";
-import { ProductTiktokService } from "~/integrations/tiktok/tiktok.services/product.service";
-import { CallAPiService } from "~/service/callApi/callAPi.service";
+import { ProductTikTokController } from "~/integrations/tiktok/tiktok.controller/product.controller";
+import { ProductTikTokService } from "~/integrations/tiktok/tiktok.services/product.service";
+import { CallApiService } from "~/service/callApi/callAPi.service";
+// import { AuthTestController } from "~/integrations/tiktok/tiktok.controller/auth.controller";
+import { TikTokOAuthController, TikTokOAuthService } from "~/integrations/tiktok/tiktok.controller/tiktokoath.controller";
+import { RegionCheckController } from "~/integrations/tiktok/tiktok.controller/auth.controller";
 
 @Module({
   imports: [HttpModule], 
-  controllers: [ProductTiktokController],
+  controllers: [ProductTikTokController,TikTokOAuthController ,RegionCheckController],
   providers: [
-    ProductTiktokService,
-    CallAPiService,
-    AuthTikTokShopService, // <-- Thêm provider này vào đây
+    ProductTikTokService,
+    CallApiService,
+    AuthTikTokShopService, 
+    TikTokOAuthService
 
   ], 
-  exports: [ProductTiktokService], 
+  exports: [ProductTikTokService], 
 })
 export class TiktokModule {}

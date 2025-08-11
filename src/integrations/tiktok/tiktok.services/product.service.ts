@@ -1,35 +1,104 @@
-import { HttpService } from "@nestjs/axios";
-import { HttpException, Injectable } from "@nestjs/common";
-import { CallAPiService } from "~/service/callApi/callAPi.service";
-const xlsx = require('xlsx');
-
+// product.service.ts
+import { Injectable } from '@nestjs/common';
+import { CallApiService } from '~/service/callApi/callAPi.service';
 
 @Injectable()
-export class ProductTiktokService {
-    constructor(
-        private readonly callAPiService: CallAPiService,
-    ) { }
-    async getProductsList(param, data) {
-        const url = process.env.GET_PRODUCT_LIST as string
-        let res = await this.callAPiService.CallApi("POST", url, data, "", { param })
-        return res
-    }
-    async updateProduct(product_id, data) {
-        const url = `${process.env.EDIT_PRODUCT as string}/${product_id}`
-        let res = await this.callAPiService.CallApi("PUT", url, data, "", { product_id })
-        return res
-    }
-    async syncProduct(warehouse_id: String) {
-        const url = process.env.GET_PRODUCT_LIST as string
-        let res = await this.callAPiService.CallApi("POST", url, warehouse_id)
-        return res
+export class ProductTikTokService {
+    constructor(private readonly callApiService: CallApiService) { }
+
+    async getProducts(params: any, data: any) {
+        try {
+            
+            const response = await this.callApiService.CallApi(
+                'POST', 
+                'products/search', 
+                data, 
+                undefined, 
+                params
+            );
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }
 
-    async removeProduct(data) {
-        const url = process.env.EDIT_PRODUCT as string
-        let res = await this.callAPiService.CallApi("POST", url, data, "", "")
-        return res
+    async getProductDetail(productId: string) {
+        try {
+            const response = await this.callApiService.CallApi(
+                'GET', 
+                `products/details`, 
+                undefined, 
+                undefined, 
+                { product_id: productId }
+            );
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }
 
+    async createProduct(productData: any) {
+        try {
+            const response = await this.callApiService.CallApi(
+                'POST', 
+                'products', 
+                productData
+            );
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
 
+    async updateProduct(productId: string, productData: any) {
+        try {
+            const response = await this.callApiService.CallApi(
+                'PUT', 
+                `products/${productId}`, 
+                productData
+            );
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async deleteProducts(productIds: string[]) {
+        try {
+            const response = await this.callApiService.CallApi(
+                'POST', 
+                'products/delete', 
+                { product_ids: productIds }
+            );
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async activateProducts(productIds: string[]) {
+        try {
+            const response = await this.callApiService.CallApi(
+                'POST', 
+                'products/activate', 
+                { product_ids: productIds }
+            );
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async deactivateProducts(productIds: string[]) {
+        try {
+            const response = await this.callApiService.CallApi(
+                'POST', 
+                'products/deactivate', 
+                { product_ids: productIds }
+            );
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
 }
