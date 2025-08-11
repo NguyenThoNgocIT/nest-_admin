@@ -11,11 +11,10 @@ export class AuthTikTokShopService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getAccessTonken(code: string): Promise<any> {
+  async getAccessToken(): Promise<any> {
     const apiKey = this.configService.get<string>('TIKTOK_SHOP_API_KEY')
     const secret = this.configService.get<string>('TIKTOK_SHOP_SECRET')
-    const auth_code = this.configService.get<string>('TIKTOK_SHOP_SECRET')
-
+    const auth_code = this.configService.get<string>('TIKTOK_SHOP_AUTH_CODE')
     const params = {
       app_key: apiKey,
       app_secret: secret,
