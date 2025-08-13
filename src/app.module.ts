@@ -1,5 +1,4 @@
 import type { FastifyRequest } from 'fastify'
-
 import { ClassSerializerInterceptor, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 
@@ -32,6 +31,7 @@ import { ToolsModule } from './modules/tools/tools.module'
 
 import { DatabaseModule } from './shared/database/database.module'
 import { SocketModule } from './socket/socket.module'
+import { TiktokModule } from './modules/tiktok/tiktok.module'
 
 @Module({
   imports: [
@@ -67,6 +67,7 @@ import { SocketModule } from './socket/socket.module'
     NetdiskModule,
     TodoModule,
     OdooModule,
+    TiktokModule
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
@@ -82,4 +83,4 @@ import { SocketModule } from './socket/socket.module'
 
   ],
 })
-export class AppModule {}
+export class AppModule { }
