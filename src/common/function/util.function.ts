@@ -10,22 +10,71 @@ function objKeySort(obj) {
   }
   return newObj
 }
-/// dùng để tạo signature cho các yêu cầu đến tiktok shop api
-export function generateSignature(params: any, body: string, path: string ): string {
-  const appSecret = process.env.TIKTOK_SHOP_SECRET
-  const sortParam = objKeySort(params)
-  let signstring = appSecret + path
+/// Dùng để tạo signature cho các yêu cầu đến TikTok Shop API
+export function generateSignature(
+  params: any, 
+  body: string | any, 
+  path: string,
+  appSecret?: string // Thêm tham số optional cho app_secret
+): string {
+  try {
+    // Lấy app_secret từ tham số hoặc environment
+    const secret = appSecret || process.env.TIKTOK_SHOP_SECRET;
+    
+    if (!secret) {
+      throw new Error('TIKTOK_SHOP_SECRET is required for signature generation');
+    }
 
-  for (const key in sortParam) {
-    signstring = signstring + key + sortParam[key]
+    // Loại bỏ sign parameter nếu có (để tránh include trong signature)
+    const cleanParams = { ...params };
+    delete cleanParams.sign;
+    
+    const sortParam = objKeySort(cleanParams);
+    let signstring = secret + path;
+
+    // Thêm các parameters đã sort
+    for (const key in sortParam) {
+      signstring = signstring + key + sortParam[key];
+    }
+
+    // Xử lý body part
+    let bodyString = '';
+    if (body) {
+      if (typeof body === 'string') {
+        bodyString = body;
+      } else if (typeof body === 'object') {
+        bodyString = JSON.stringify(body);
+      } else {
+        bodyString = String(body);
+      }
+    }
+
+    // Thêm body và secret cuối
+    signstring = signstring + bodyString + secret;
+
+    console.log('=== SIGNATURE GENERATION DEBUG ===');
+    console.log('Path:', path);
+    console.log('Sorted Params:', sortParam);
+    console.log('Body String:', bodyString || 'empty');
+    console.log('Secret Length:', secret.length);
+    console.log('String to Sign:', signstring);
+    console.log('================================');
+
+    // Tạo HMAC-SHA256 signature
+    const signature = crypto
+      .createHmac('sha256', secret)
+      .update(signstring, 'utf8')
+      .digest('hex');
+
+    console.log('Generated Signature:', signature);
+    return signature;
+
+  } catch (error) {
+    console.error('Error generating signature:', error);
+    throw new Error(`Failed to generate signature: ${error.message}`);
   }
-  signstring = signstring + (!body ? appSecret : JSON.stringify(body) + appSecret)
-
-  return crypto
-    .createHmac('sha256', appSecret as string)
-    .update(signstring)
-    .digest('hex')
 }
+
 export type CompatibleZodInfer<T extends CompatibleZodType> = T['_output']
 export type CompatibleZodType = Pick<
   z.ZodType<unknown>,
