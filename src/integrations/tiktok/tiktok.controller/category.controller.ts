@@ -1,4 +1,4 @@
-import { Controller, Get, Inject,  Param } from "@nestjs/common"
+import { Controller, Get, Inject,  Param, Query } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { ERR_CODE, IReqApp } from "~/common"
 import { getbrandsDto, getListingsDto } from "~/common/dto/tiktokDto/caterory.dto"
@@ -8,6 +8,7 @@ import { ControllerBase } from "~/service/base/base.controller"
 import { CategoryService } from "../tiktok.services/category.service"
 
 @Controller('tiktok/categories')
+@Public()
 export class CategoryTiktokController extends ControllerBase {
   constructor(
     @Inject(REQUEST) request: IReqApp,
@@ -16,7 +17,7 @@ export class CategoryTiktokController extends ControllerBase {
     super(request);
   }
 
-  @Public()
+
   @Get('list') 
   async getOrder(
     @Param() data: getListingsDto
@@ -41,11 +42,10 @@ export class CategoryTiktokController extends ControllerBase {
     }
   }
 
-  @Get('brands') 
-  async getBrands(
-    @Param() data: getbrandsDto
-  ): Promise<any> {
-    let list = await this.categoryService.getBrands(data);
+  @Public()
+  @Get('brands')
+  async getBrands(@Query() data: getbrandsDto): Promise<any> {
+    const list = await this.categoryService.getBrands(data);
     if (list) {
       return list;
     } else {

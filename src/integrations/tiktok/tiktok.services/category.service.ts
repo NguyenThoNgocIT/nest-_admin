@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common"
+import { getbrandsDto } from "~/common/dto/tiktokDto/caterory.dto"
 import { CallApiService } from "~/service/callApi/callAPi.service"
 
 @Injectable()
@@ -20,15 +21,13 @@ export class CategoryService {
         return res
     }
 
-    async getBrands(data) {
+    async getBrands(data: getbrandsDto) {
         const url = `${process.env.GET_BRANDS as string}`
-        let res = await this.callAPiService.CallApi("GET", url, "", "", data)
+        const queryParams: Record<string, string | number | boolean> = {
+            page_size: data.page_size ?? 100,
+        };
+
+        let res = await this.callAPiService.CallApi("GET", url, "", "", queryParams)
         return res
     }
-
-
-
-
-
-
 }
