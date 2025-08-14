@@ -7,7 +7,6 @@ import { OdooPartnerData, OdooService } from './odoo.service'
 @Controller('odoo')
 export class OdooController {
   constructor(private readonly odooService: OdooService) {}
-
   @Get('test-api-key')
   @Public()
   @ApiOperation({ summary: 'Kiểm tra lấy API key từ Odoo' })

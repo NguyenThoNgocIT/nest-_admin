@@ -14,24 +14,25 @@ import { AllExceptionsFilter } from './common/filters/any-exception.filter'
 import { IdempotenceInterceptor } from './common/interceptors/idempotence.interceptor'
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor'
 import { TransformInterceptor } from './common/interceptors/transform.interceptor'
+import { WooCommerceModule } from './integrations/woocommerce/woocommerce.module'
 import { AuthModule } from './modules/auth/auth.module'
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'
 import { RbacGuard } from './modules/auth/guards/rbac.guard'
 import { HealthModule } from './modules/health/health.module'
-import { NetdiskModule } from './modules/netdisk/netdisk.module'
 
+import { NetdiskModule } from './modules/netdisk/netdisk.module'
 import { OdooModule } from './modules/odoo/odoo.module'
 import { SseModule } from './modules/sse/sse.module'
+
 import { SystemModule } from './modules/system/system.module'
 
 import { TasksModule } from './modules/tasks/tasks.module'
+import { TiktokModule } from './modules/tiktok/tiktok.module'
 
 import { TodoModule } from './modules/todo/todo.module'
 import { ToolsModule } from './modules/tools/tools.module'
-
 import { DatabaseModule } from './shared/database/database.module'
 import { SocketModule } from './socket/socket.module'
-import { TiktokModule } from './modules/tiktok/tiktok.module'
 
 @Module({
   imports: [
@@ -67,7 +68,8 @@ import { TiktokModule } from './modules/tiktok/tiktok.module'
     NetdiskModule,
     TodoModule,
     OdooModule,
-    TiktokModule
+    TiktokModule,
+    WooCommerceModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

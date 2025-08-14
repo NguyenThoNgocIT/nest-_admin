@@ -30,6 +30,7 @@ const controllers = [
   AccountController,
   CaptchaController,
   EmailController,
+
 ]
 const providers = [AuthService, TokenService, CaptchaService]
 const strategies = [LocalStrategy, JwtStrategy]

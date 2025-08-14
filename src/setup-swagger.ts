@@ -33,7 +33,7 @@ export function setupSwagger(
 
   // auth security
   documentBuilder.addSecurity(API_SECURITY_AUTH, {
-    description: '输入令牌（Enter the token）',
+    description: '（Enter the token）',
     type: 'http',
     scheme: 'bearer',
     bearerFormat: 'JWT',
@@ -46,7 +46,7 @@ export function setupSwagger(
 
   SwaggerModule.setup(path, app, document, {
     swaggerOptions: {
-      persistAuthorization: true, // 保持登录
+      persistAuthorization: true,
     },
     jsonDocumentUrl: `/${path}/json`,
   })

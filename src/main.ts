@@ -85,6 +85,7 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0', async () => {
     app.useLogger(app.get(LoggerService))
+
     const url = await app.getUrl()
     const { pid } = process
     const env = cluster.isPrimary
@@ -97,6 +98,7 @@ async function bootstrap() {
 
     const logger = new Logger('NestApplication')
     logger.log(`[${prefix + pid}] Server running on ${url}`)
+    app.getHttpAdapter().getInstance().printRoutes()
   })
 
   if (module.hot) {
