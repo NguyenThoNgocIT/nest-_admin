@@ -1,5 +1,7 @@
 import crypto from 'node:crypto'
 import { z } from 'zod'
+import { Request } from 'express'
+
 // hàm này sẽ sắp xếp các khóa của một đối tượng theo thứ tự tăng dần
 // tik tok shop api sẽ yêu cầu các tham số được sắp xếp theo thứ tự chữ cái
 function objKeySort(obj) {
@@ -172,3 +174,13 @@ export function createZodDto<T extends z.ZodTypeAny>(s: T): ZodDto<T> {
   }
   return AugmentedZodDto as unknown as ZodDto<T>
 }
+export const getRealIp = (req: Request): string => {
+	return (
+		// req.clientIp ??
+		req.ips?.[0] ??
+		req.ip ??
+		(() => {
+			throw new Error('Client IP not detected')
+		})()
+	)
+  }

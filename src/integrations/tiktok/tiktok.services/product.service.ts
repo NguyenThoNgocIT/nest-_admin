@@ -6,21 +6,20 @@ import { CallApiService } from '~/service/callApi/callAPi.service';
 export class ProductTikTokService {
     constructor(private readonly callApiService: CallApiService) { }
 
-    async getProducts(_params: any, data: any) {
-        const queryParams = {
-            'page_size': data.page_size ?? 10,
-            'page_number': data.page_number ?? 1,
-        };
+async getProducts(_params: any, data: { page_size?: number; page_number?: number }) {
+    const queryParams = {
+        page_size: data.page_size ?? 10,
+        page_number: data.page_number ?? 1,
+    };
 
-        return this.callApiService.CallApi(
-            'POST',
-            '/product/202309/products/search',
-            {}, // body rỗng
-            undefined,
-            queryParams
-        );
-
-    }
+    return this.callApiService.CallApi(
+        'POST',
+        '/product/202309/products/search',
+        {}, // empty body
+        undefined,
+        queryParams
+    );
+}
 
 
     async getProductBrands() {

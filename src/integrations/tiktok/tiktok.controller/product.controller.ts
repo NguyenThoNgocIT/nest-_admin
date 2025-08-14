@@ -3,7 +3,6 @@ import { Body, Controller, Get, Param, Post, Put, Delete, Query } from '@nestjs/
 import { ProductTikTokService } from '../tiktok.services/product.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '~/modules/auth/decorators/public.decorator';
-import { ProductListzDto, ProductSearchzDto } from '~/common/dto/tiktokDto/product.dto';
 import { ERR_CODE } from '~/common';
 import { UnAuthErr } from '~/common/error';
 
@@ -14,17 +13,16 @@ export class ProductTikTokController {
     constructor(private readonly productService: ProductTikTokService) { }
 
     // @PermsGuard('PRODUCT.VIEW')
-    @Public()
-    @Post('search')
-    async getProducts(@Body() body:  ProductSearchzDto ) {
-        const result = await this.productService.getProducts({}, body);
-        if (result) {
-            return result;
-        } else {
-            throw new UnAuthErr(ERR_CODE.LIST_NOT_FOUND);
-        }
+@Public()
+@Post('search')
+async getProducts(@Query('page_size') pageSize: number, @Query('page_number') pageNumber: number) {
+    const result = await this.productService.getProducts({}, { page_size: pageSize, page_number: pageNumber });
+    if (result) {
+        return result;
+    } else {
+        throw new UnAuthErr(ERR_CODE.LIST_NOT_FOUND);
     }
-
+}
     @Public()
     @Get('brands')
     async getProductBrands() {
