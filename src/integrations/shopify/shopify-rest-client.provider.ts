@@ -10,11 +10,14 @@ export const ShopifyRestClientProvider: Provider = {
     const accessToken = configService.get<string>('SHOPIFY_API_PASSWORD');
     const apiKey = configService.get<string>('SHOPIFY_API_KEY');
     const apiSecret = configService.get<string>('SHOPIFY_API_SECRET');
-
+    console.log('SHOPIFY_API_KEY:', apiKey);
+    console.log('SHOPIFY_API_SECRET:', apiSecret);
+    console.log('SHOPIFY_API_PASSWORD:', accessToken);
+    console.log('SHOPIFY_SHOP_NAME:', shop);
     const shopify = shopifyApi({
       apiKey,
       apiSecretKey: apiSecret,
-      scopes: ['read_products', 'write_products'],
+      // scopes: ['read_products', 'write_products'],
       hostName: 'localhost:3000',
       apiVersion: LATEST_API_VERSION,
       isCustomStoreApp: true,

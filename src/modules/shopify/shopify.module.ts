@@ -5,9 +5,13 @@ import { ProductShopifyController } from '~/integrations/shopify/shopify.control
 import { ProductShopifyService } from '~/integrations/shopify/shopify.services/product.service';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, ConfigModule.forRoot({
+    envFilePath: '.env',
+    isGlobal: true,
+  }),
+  ],
   controllers: [ProductShopifyController],
-  providers: [ProductShopifyService,ShopifyRestClientProvider],
+  providers: [ProductShopifyService, ShopifyRestClientProvider],
   exports: [ProductShopifyService],
 })
-export class ShopifyModule {}
+export class ShopifyModule { }
