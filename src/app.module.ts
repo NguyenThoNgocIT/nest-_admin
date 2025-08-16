@@ -32,6 +32,7 @@ import { ToolsModule } from './modules/tools/tools.module'
 import { DatabaseModule } from './shared/database/database.module'
 import { SocketModule } from './socket/socket.module'
 import { TiktokModule } from './modules/tiktok/tiktok.module'
+import { ShopifyModule } from './modules/shopify/shopify.module'
 
 @Module({
   imports: [
@@ -67,7 +68,8 @@ import { TiktokModule } from './modules/tiktok/tiktok.module'
     NetdiskModule,
     TodoModule,
     OdooModule,
-    TiktokModule
+    TiktokModule,
+    ShopifyModule
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
