@@ -67,6 +67,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.0.13",
     "@prisma/client": "^6.6.0",
+    "@shopify/shopify-api": "^11.14.1",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-emitter": "^5.1.0",
     "axios": "^1.8.4",
