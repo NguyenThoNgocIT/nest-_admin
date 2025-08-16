@@ -1,6 +1,8 @@
 import { Controller, Get, Param, Post, Body, Put, Delete, ParseIntPipe } from '@nestjs/common';
 import { ProductShopifyService } from '../shopify.services/product.service';
 import { Public } from '~/modules/auth/decorators/public.decorator';
+import { CreateProductDto } from '~/common/dto/shopifyDto/product.dto';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('shopify')
 export class ProductShopifyController {
@@ -21,7 +23,9 @@ export class ProductShopifyController {
   }
 
   // Tạo sản phẩm mới
+  @Public()
   @Post('products')
+  @ApiBody({ type: CreateProductDto })
   async createProduct(@Body() productData: any) {
     return await this.productService.createProduct(productData);
   }
@@ -33,6 +37,7 @@ export class ProductShopifyController {
   }
 
   // Xóa sản phẩm
+  @Public()
   @Delete('products/:id')
   async deleteProduct(@Param('id', ParseIntPipe) id: number) {
     return await this.productService.deleteProduct(id);
