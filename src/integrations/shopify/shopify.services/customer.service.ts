@@ -1,17 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RestClient } from '@shopify/shopify-api';
+import { CreateCustomerDto, UpdateCustomerDto } from '~/common/dto/shopifyDto/customer.dto';
 
 @Injectable()
-export class ProductShopifyService {
+export class CustomerShopifyService {
   constructor(@Inject('SHOPIFY_REST_CLIENT') private readonly restClient: RestClient) { }
 
   // Lấy danh sách sản phẩm
-  async getProducts() {
+  async getListCustomer() {
     try {
       const response = await this.restClient.get({
-        path: 'products',
+        path: 'customers',
       });
-      return response.body.products;
+      console.log("response",response)
+      return response.body.customers;
     } catch (error) {
       throw new Error(`Failed to fetch products: ${error.message}`);
     }
@@ -29,29 +31,33 @@ export class ProductShopifyService {
     }
   }
 
-  // Tạo sản phẩm mới
-  async createProduct(productData: any) {
+  async createCustomer(customerData: CreateCustomerDto) {
     try {
+        const payload = {
+      customer: {
+        ...customerData,
+      },
+    };
+    console.log('payload',payload)
       const response = await this.restClient.post({
-        path: 'products',
-        data: { product: productData },
+        path: 'customers',
+        data:  payload ,
       });
-      return response.body.product;
+      return response.body.customer;
     } catch (error) {
-      throw new Error(`Failed to create product: ${error.message}`);
+      throw new Error(`Failed to create customer: ${error.message}`);
     }
   }
 
-  // Cập nhật sản phẩm
-  async updateProduct(id: number, productData: any) {
+ async updateCustomer(customerId: number, customerData: UpdateCustomerDto) {
     try {
       const response = await this.restClient.put({
-        path: `products/${id}`,
-        data: { product: productData },
+        path: `customers/${customerId}`,
+        data: { customer: customerData },
       });
-      return response.body.product;
+      return response.body.customer;
     } catch (error) {
-      throw new Error(`Failed to update product ${id}: ${error.message}`);
+      throw new Error(`Failed to update customer: ${error.message}`);
     }
   }
 

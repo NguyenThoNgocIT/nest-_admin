@@ -10,10 +10,6 @@ export const ShopifyRestClientProvider: Provider = {
     const accessToken = configService.get<string>('SHOPIFY_API_PASSWORD');
     const apiKey = configService.get<string>('SHOPIFY_API_KEY');
     const apiSecret = configService.get<string>('SHOPIFY_API_SECRET');
-    console.log('SHOPIFY_API_KEY:', apiKey);
-    console.log('SHOPIFY_API_SECRET:', apiSecret);
-    console.log('SHOPIFY_API_PASSWORD:', accessToken);
-    console.log('SHOPIFY_SHOP_NAME:', shop);
     const shopify = shopifyApi({
       apiKey,
       apiSecretKey: apiSecret,
@@ -30,8 +26,6 @@ export const ShopifyRestClientProvider: Provider = {
     session.accessToken = accessToken;
 
     const restClient = new shopify.clients.Rest({ session });
-
-    console.log('Created RestClient successfully');
 
     return restClient;
   },
