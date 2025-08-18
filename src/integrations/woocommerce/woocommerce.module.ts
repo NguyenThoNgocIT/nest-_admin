@@ -3,14 +3,17 @@ import { ConfigService } from '@nestjs/config'
 import WooCommerceRestApi from '@woocommerce/woocommerce-rest-api'
 import { AuthModule } from '~/modules/auth/auth.module'
 import { WOOCOMMERCE_API_INSTANCE } from './constants'
+import { CouponController } from './woocommerce.controller/coupon.controller'
 import { ProductController } from './woocommerce.controller/product.controller'
+import { CouponService } from './woocommerce.service/coupon.service'
+
 import { ProductService } from './woocommerce.service/product.service'
-import { WooCommerceService } from './woocommerce.service/woocommerce.service'
 
 @Module({
   imports: [AuthModule],
   controllers: [/// khai báo controller ở đây
     ProductController,
+    CouponController,
   ],
   providers: [
     {
@@ -30,11 +33,11 @@ import { WooCommerceService } from './woocommerce.service/woocommerce.service'
         })
       },
     },
-    WooCommerceService,
     ProductService,
+    CouponService,
   ],
   // Nhớ export service để các module khác có thể dùng
-  exports: [WooCommerceService, ProductService],
+  exports: [ProductService, CouponService, WOOCOMMERCE_API_INSTANCE],
 
 })
 export class WooCommerceModule {}
