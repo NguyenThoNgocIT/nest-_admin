@@ -33,6 +33,7 @@ import { DatabaseModule } from './shared/database/database.module'
 import { SocketModule } from './socket/socket.module'
 import { TiktokModule } from './modules/tiktok/tiktok.module'
 import { ShopifyModule } from './modules/shopify/shopify.module'
+import { RedisModule } from './shared/redis/redis.module'
 
 @Module({
   imports: [
@@ -69,7 +70,8 @@ import { ShopifyModule } from './modules/shopify/shopify.module'
     TodoModule,
     OdooModule,
     TiktokModule,
-    ShopifyModule
+    ShopifyModule,
+    RedisModule
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
