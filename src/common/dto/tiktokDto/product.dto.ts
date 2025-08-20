@@ -1,6 +1,12 @@
 import z from 'zod'
 import { createZodDto } from '../..'
 
+export class ProductSearchzDto extends createZodDto(
+    z.object({
+        page_size: z.number().default(10),
+        page_number: z.number().default(1)
+    })
+) { }
 
 export class ProductListzDto extends createZodDto(
     z

@@ -5,18 +5,22 @@ import { ProductTikTokController } from "~/integrations/tiktok/tiktok.controller
 import { ProductTikTokService } from "~/integrations/tiktok/tiktok.services/product.service";
 import { CallApiService } from "~/service/callApi/callAPi.service";
 // import { AuthTestController } from "~/integrations/tiktok/tiktok.controller/auth.controller";
-import { TikTokOAuthController, TikTokOAuthService } from "~/integrations/tiktok/tiktok.controller/tiktokoath.controller";
-import { RegionCheckController } from "~/integrations/tiktok/tiktok.controller/auth.controller";
+import { TikTokOAuthController } from "~/integrations/tiktok/tiktok.controller/tiktokoath.controller";
+import { CategoryTiktokController } from "~/integrations/tiktok/tiktok.controller/category.controller";
+import { CategoryService } from "~/integrations/tiktok/tiktok.services/category.service";
 
 @Module({
   imports: [HttpModule], 
-  controllers: [ProductTikTokController,TikTokOAuthController ,RegionCheckController],
+  controllers: [
+    ProductTikTokController,
+    TikTokOAuthController,
+    CategoryTiktokController
+  ],
   providers: [
     ProductTikTokService,
     CallApiService,
     AuthTikTokShopService, 
-    TikTokOAuthService
-
+    CategoryService
   ], 
   exports: [ProductTikTokService], 
 })

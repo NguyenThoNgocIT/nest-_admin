@@ -6,7 +6,6 @@ import {
 	HttpStatus,
 	Logger,
 } from '@nestjs/common'
-import { Prisma } from '@prisma/client'
 import { ERR_CODE, IErrorRes, RES_CODE } from '../../common'
 import { CoreErr } from './app-exception'
 
