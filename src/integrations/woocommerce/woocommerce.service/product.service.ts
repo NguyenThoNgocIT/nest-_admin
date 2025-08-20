@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common'
 import WooCommerceRestApi from '@woocommerce/woocommerce-rest-api'
-import { WOOCOMMERCE_API_INSTANCE } from '../constants'
+import { WOOCOMMERCE_API_INSTANCE } from '../../constants'
 
 @Injectable()
 export class ProductService {
