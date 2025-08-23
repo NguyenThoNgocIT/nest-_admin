@@ -46,6 +46,7 @@ const providers: Provider[] = [
         return {
           isGlobal: true,
           store: redisStore,
+          ttl: 10,
           isCacheableValue: () => true,
           ...redisOptions,
         }

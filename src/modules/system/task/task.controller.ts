@@ -23,7 +23,7 @@ export const permissions = definePermission('system:task', {
   STOP: 'stop',
 } as const)
 
-@ApiTags('System - 任务调度模块')
+@ApiTags('System - Mô-đun lập lịch tác vụ')
 @ApiSecurityAuth()
 @Controller('tasks')
 export class TaskController {
