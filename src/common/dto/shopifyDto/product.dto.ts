@@ -36,7 +36,7 @@ const ImageSchema = z.object({
 export class CreateProductDto extends createZodDto(
   z.object({
     title: z.string().min(1, 'Tiêu đề là bắt buộc'),
-    body_html: z.string().optional(),
+    descriptionHtml: z.string().optional(),
     vendor: z.string().optional(),
     product_type: z.string().optional(),
     status: z.enum(['active', 'draft', 'archived']).optional().default('draft'),
@@ -48,7 +48,7 @@ export class CreateProductDto extends createZodDto(
   title: string;
 
   @ApiPropertyOptional({ description: 'Mô tả HTML của sản phẩm', example: '<p>Mô tả sản phẩm mẫu</p>' })
-  body_html?: string;
+  descriptionHtml?: string;
 
   @ApiPropertyOptional({ description: 'Nhà cung cấp', example: 'Nhà cung cấp' })
   vendor?: string;

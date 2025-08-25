@@ -12,12 +12,12 @@ export class ProductShopifyProcessor {
   async handleCreateProduct(job: Job<{ productData: any }>) {
     const { productData } = job.data;
     try {
-      await this.productService.createProduct(productData);
+      await this.productService.createProductByGraphqlClient(productData);
     } catch (error) {
       console.error(`Lỗi khi tạo sản phẩm:`, {
         message: error.message,
         productTitle: productData?.title,
-        productData: JSON.stringify(productData, null, 2)
+        // productData: JSON.stringify(productData, null, 2)
       });
       throw error;
     }
