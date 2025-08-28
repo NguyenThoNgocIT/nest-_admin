@@ -1,47 +1,44 @@
-import FastifyCookie from '@fastify/cookie'
-import FastifyMultipart from '@fastify/multipart'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
+import fastifyMultipart from '@fastify/multipart'
+import fastifyCookie from '@fastify/cookie'
+import { FastifyInstance } from 'fastify'
 
-const app: FastifyAdapter = new FastifyAdapter({
-  // @see https://www.fastify.io/docs/latest/Reference/Server/#trustproxy
+const adapter: FastifyAdapter = new FastifyAdapter({
   trustProxy: true,
   logger: false,
-  // forceCloseConnections: true,
 })
-export { app as fastifyApp }
 
-app.register(FastifyMultipart, {
+// Lấy instance gốc từ adapter
+const fastifyApp = adapter.getInstance() as FastifyInstance
+
+fastifyApp.register(fastifyMultipart, {
   limits: {
-    fields: 10, // Max number of non-file fields
-    fileSize: 1024 * 1024 * 6, // limit size 6M
-    files: 5, // Max number of file fields
+    fields: 10,
+    fileSize: 1024 * 1024 * 6,
+    files: 5,
   },
 })
 
-app.register(FastifyCookie, {
-  secret: 'cookie-secret', // 这个 secret 不太重要，不存鉴权相关，无关紧要
+fastifyApp.register(fastifyCookie, {
+  secret: 'cookie-secret',
 })
 
-app.getInstance().addHook('onRequest', (request, reply, done) => {
-  // set undefined origin
+fastifyApp.addHook('onRequest', (request, reply, done) => {
   const { origin } = request.headers
-  if (!origin)
-    request.headers.origin = request.headers.host
-
-  // forbidden php
+  if (!origin) request.headers.origin = request.headers.host
 
   const { url } = request
 
   if (url.endsWith('.php')) {
-    reply.raw.statusMessage
-      = 'Eh. PHP is not support on this machine. Yep, I also think PHP is bestest programming language. But for me it is beyond my reach.'
-
+    reply.raw.statusMessage =
+      'Eh. PHP is not support on this machine. Yep, I also think PHP is bestest programming language. But for me it is beyond my reach.'
     return reply.code(418).send()
   }
 
-  // skip favicon request
   if (url.match(/favicon.ico$/) || url.match(/manifest.json$/))
     return reply.code(204).send()
 
   done()
 })
+
+export { adapter as fastifyApp }

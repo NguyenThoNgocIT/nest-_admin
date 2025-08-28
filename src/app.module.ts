@@ -35,6 +35,7 @@ import { DatabaseModule } from './shared/database/database.module'
 import { SocketModule } from './socket/socket.module'
 import { TiktokModule } from './modules/tiktok/tiktok.module'
 import { RedisModule } from './shared/redis/redis.module'
+import { PrintifyModule } from './modules/printify/printify.module'
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { RedisModule } from './shared/redis/redis.module'
     RedisModule,
     WooCommerceModule,
     ShopifyModule,
+    PrintifyModule
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Post, Body, Put, Delete, ParseIntPipe } from '@nestjs/common';
 import { Public } from '~/modules/auth/decorators/public.decorator';
-import { CreateProductDto } from '~/common/dto/shopifyDto/product.dto';
 import { ApiBody } from '@nestjs/swagger';
 import { CustomerShopifyService } from '../shopify.services/customer.service';
 import { CreateCustomerDto, UpdateCustomerDto } from '~/common/dto/shopifyDto/customer.dto';
